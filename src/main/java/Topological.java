@@ -7,7 +7,6 @@ public class Topological {
         if (!cyclefinder.hasCycle()){
             DepthFirstOrder dfs = new DepthFirstOrder(G);
             order = dfs.reversePost();
-            order= dfs.reversePost();
         }
     }
     public Iterable<Integer> order() {
