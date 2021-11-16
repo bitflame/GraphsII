@@ -1,7 +1,4 @@
-import edu.princeton.cs.algs4.DepthFirstOrder;
-import edu.princeton.cs.algs4.Digraph;
-import edu.princeton.cs.algs4.In;
-import edu.princeton.cs.algs4.StdOut;
+import edu.princeton.cs.algs4.*;
 
 public class Kosaraju {
     private boolean[] marked;
@@ -42,7 +39,22 @@ public class Kosaraju {
     public static void main(String[] args) {
         Digraph digraph = new Digraph(new In(args[0]));
         Kosaraju kr = new Kosaraju(digraph);
-        StdOut.println(kr.count+" componenets.");
-        for (int i: kr.id) StdOut.println(i);
+        int M = kr.count();
+        StdOut.println(M + " components.");
+        Bag<Integer>[] components;
+        components = (Bag<Integer>[]) new Bag[M];
+        for (int i = 0; i < M; i++) {
+            components[i] = new Bag<Integer>();
+        }
+        for (int v = 0; v < digraph.V(); v++) {
+            components[kr.id(v)].add(v);
+        }
+        for (int i = 0; i < M; i++) {
+            StdOut.print("Component " + i + " : ");
+            for (int v : components[i]) {
+                StdOut.print(v + " ");
+            }
+            StdOut.println();
+        }
     }
 }
