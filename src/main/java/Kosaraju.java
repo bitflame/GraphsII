@@ -40,7 +40,7 @@ public class Kosaraju {
         Digraph digraph = new Digraph(new In(args[0]));
         Kosaraju kr = new Kosaraju(digraph);
         int M = kr.count();
-        StdOut.println(M + " components.");
+        StdOut.println(M + " strongly connected components.");
         Bag<Integer>[] components;
         components = (Bag<Integer>[]) new Bag[M];
         for (int i = 0; i < M; i++) {
