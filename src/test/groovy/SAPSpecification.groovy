@@ -12,22 +12,23 @@ class SAPSpecification extends Specification {
         sap.getPath(from, to) == shortest
 
         where:
-        file            | from | to | shortest
-        "digraph25.txt" | 1    | 2  | [2, 1, 0]
-        "digraph25.txt" | 3    | 4  | [4, 3, 1]
-        "digraph25.txt" | 4    | 3  | [4, 3, 1]
-        "digraph25.txt" | 5    | 6  | [6, 5, 2]
-        "digraph25.txt" | 6    | 5  | [6, 5, 2]
-        "digraph25.txt" | 4    | 6  | [6, 4, 2, 1, 0]
-        "digraph25.txt" | 1    | 6  | [6, 2, 1, 0]
-        "digraph25.txt" | 17   | 24 | [24, 20, 17, 12, 10, 5]
-        "digraph25.txt" | 23   | 24 | [24, 23, 20]
-        "digraph25.txt" | 11   | 14 | [14, 11, 7, 5, 3, 2, 1, 0]
-        "digraph25.txt" | 17   | 19 | [19, 17, 12, 10, 5]
-        "digraph25.txt" | 17   | 17 | [17]
-        "digraph1.txt"  | 2    | 0  | [2, 0]
-        "digraph1.txt"  | 10   | 4  | [10, 5, 4, 1]
-        "digraph1.txt"  | 3    | 11 | [11, 10, 5, 3, 1]
+        file                             | from | to | shortest
+        "digraph25.txt"                  | 1    | 2  | [2, 1, 0]
+        "digraph25.txt"                  | 3    | 4  | [4, 3, 1]
+        "digraph25.txt"                  | 4    | 3  | [4, 3, 1]
+        "digraph25.txt"                  | 5    | 6  | [6, 5, 2]
+        "digraph25.txt"                  | 6    | 5  | [6, 5, 2]
+        "digraph25.txt"                  | 4    | 6  | [6, 4, 2, 1, 0]
+        "digraph25.txt"                  | 1    | 6  | [6, 2, 1, 0]
+        "digraph25.txt"                  | 17   | 24 | [24, 20, 17, 12, 10, 5]
+        "digraph25.txt"                  | 23   | 24 | [24, 23, 20]
+        "digraph25.txt"                  | 11   | 14 | [14, 11, 7, 5, 3, 2, 1, 0]
+        "digraph25.txt"                  | 17   | 19 | [19, 17, 12, 10, 5]
+        "digraph25.txt"                  | 17   | 17 | [17]
+        "digraph1.txt"                   | 2    | 0  | [2, 0]
+        "digraph1.txt"                   | 10   | 4  | [10, 5, 4, 1]
+        "digraph1.txt"                   | 3    | 11 | [11, 10, 5, 3, 1]
+        "digraph-ambiguous-ancestor.txt" | 1    | 2  | [1, 2]
     }
 
     def "SAP length() should return the length of the shortest path between two points"() {

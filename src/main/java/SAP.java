@@ -89,8 +89,14 @@ public class SAP {
 Go through From and To paths in one loop, if the values are different push to stack, and go on, if they are the same,
  push to stack and return*/
         DeluxBFS pathToTo = new DeluxBFS(digraph, to);
+
         //System.out.println("Here is everything in pathToTo");
         for (int v = digraph.V() - 1; v >= 0; v--) {
+            if (pathToFrom.hasPathTo(to) && pathToFrom.distTo(to) == 1) {
+                shortestPath.add(from);
+                shortestPath.add(to);
+                return shortestPath;
+            }
             if (pathToTo.hasPathTo(v) && !pathToFrom.hasPathTo(v)) {
                 shortestPath.add(v);
             }
@@ -165,9 +171,8 @@ Go through From and To paths in one loop, if the values are different push to st
         System.out.println("]");
         System.out.println();
 
-        System.out.println("]");
         System.out.println();
-        System.out.print("The path between 23 and 24 should be: [ 20 ] ");
+        System.out.print("The path between 23 and 24 should be: [ 24 23 20 ] ");
         System.out.print("[");
         for (int i : sap.getPath(23, 24)) {
             System.out.print(" " + i + " ");
@@ -175,9 +180,8 @@ Go through From and To paths in one loop, if the values are different push to st
         System.out.println("]");
         System.out.println();
 
-        System.out.println("]");
-        System.out.println();
-        System.out.print("The path between 11 and 4 should be: [  0 1 2 5] ");
+
+        System.out.print("The path between 11 and 4 should be: [  11 5 4 2 1 0 ] ");
         System.out.print("[");
         for (int i : sap.getPath(11, 4)) {
             System.out.print(" " + i + " ");
@@ -203,8 +207,7 @@ Go through From and To paths in one loop, if the values are different push to st
 
         digraph = new Digraph(new In(new File("src/main/resources/digraph1.txt")));
         sap = new SAP(digraph);
-        System.out.println("]");
-        System.out.println();
+
         System.out.print("The path between 10 and 4 should be: [ 4 1 5 10 ] ");
         System.out.print("[");
         for (int i : sap.getPath(4, 10)) {
@@ -212,13 +215,24 @@ Go through From and To paths in one loop, if the values are different push to st
         }
         System.out.println("]");
         System.out.println();
-        System.out.println("]");
-        System.out.println();
+
 
         System.out.println("ancestor should return 1 for values 3 and 11: " + sap.ancestor(3, 11));
 
         digraph = new Digraph(new In(new File("src/main/resources/digraph-ambiguous-ancestor.txt")));
         sap = new SAP(digraph);
+        System.out.print("The shortest path between 1 and 2 - in ambiguous-ancestor is [1 2]");
+        System.out.print("[");
+        // test 1 and 2 for ambiguous-ancestor
+        for (int i : sap.getPath(1, 2)) {
+            System.out.print(" " + i + " ");
+        }
+        System.out.println("]");
+        System.out.println();
+
+        digraph = new Digraph(new In(new File("src/main/resources/simplecycle.txt")));
+        sap = new SAP(digraph);
+        System.out.println("Expecting this to be true for simplecycle.txt: " + sap.hasCycle);
 
         System.out.print("The path between 27 and 0 should be: Exception ");
         System.out.print("[");
