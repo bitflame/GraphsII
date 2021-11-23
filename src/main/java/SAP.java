@@ -25,6 +25,17 @@ public class SAP {
     public int length(int v, int w) {
         return getPath(v, w).size();
     }
+    // a common ancestor of v and w that participates in a shortest ancestral path; -1 if no such path
+    public int ancestor(int v, int w) {
+        DeluxBFS pathToFrom = new DeluxBFS(digraph, v);
+        DeluxBFS pathToTo = new DeluxBFS(digraph, w);
+        for (int i = digraph.V() - 1; i >= 0; i--) {
+            if (pathToFrom.hasPathTo(i) && pathToTo.hasPathTo(i)) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
     // length of the shortest ancestral path between any vertex in v and any vertex in w; -1 if no such path
     public int length(Iterable<Integer> v, Iterable<Integer> w) {
@@ -32,15 +43,10 @@ public class SAP {
         List<Integer> singlePath = new ArrayList<>();
         for (int i : v) {
             for (int j : w) {
-                singlePath = getPath(i, j);
+                if (getPath(i,j)!=null) return getPath(i,j).size();
             }
-            paths.add(singlePath);
         }
-        for (Object obj : paths) {
-            ArrayList<Integer> temp = (ArrayList<Integer>) obj;
-            if (temp.size() < singlePath.size()) singlePath = temp;
-        }
-        return singlePath.size();
+        return -1;
     }
 
     // a common ancestor that participates in the shortest ancestral path; -1 if no such path
@@ -192,7 +198,7 @@ Go through From and To paths in one loop, if the values are different push to st
             }
             System.out.println("]");
             System.out.println();
-        } catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException(e.getMessage());
         }
 
