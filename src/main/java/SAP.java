@@ -2,6 +2,7 @@ import edu.princeton.cs.algs4.Digraph;
 import edu.princeton.cs.algs4.DirectedCycle;
 import edu.princeton.cs.algs4.In;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -13,6 +14,7 @@ public class SAP {
 
     // constructor takes a digraph ( not necessarily a DAG )
     public SAP(Digraph digraph) {
+        if (digraph == null) throw new IllegalArgumentException("Digraph value can not be null");
         DirectedCycle cycleFinder = new DirectedCycle(digraph);
         if (cycleFinder.hasCycle()) {
             hasCycle = true;
@@ -25,6 +27,7 @@ public class SAP {
     public int length(int v, int w) {
         return getPath(v, w).size();
     }
+
     // a common ancestor of v and w that participates in a shortest ancestral path; -1 if no such path
     public int ancestor(int v, int w) {
         DeluxBFS pathToFrom = new DeluxBFS(digraph, v);
@@ -39,11 +42,13 @@ public class SAP {
 
     // length of the shortest ancestral path between any vertex in v and any vertex in w; -1 if no such path
     public int length(Iterable<Integer> v, Iterable<Integer> w) {
+        if (v == null || w == null)
+            throw new IllegalArgumentException("Iterable value to SAP.length() can not be null.");
         List<List<Integer>> paths = new ArrayList<>();
         List<Integer> singlePath = new ArrayList<>();
         for (int i : v) {
             for (int j : w) {
-                if (getPath(i,j)!=null) return getPath(i,j).size();
+                if (getPath(i, j) != null) return getPath(i, j).size();
             }
         }
         return -1;
@@ -52,6 +57,8 @@ public class SAP {
     // a common ancestor that participates in the shortest ancestral path; -1 if no such path
     public int ancestor(Iterable<Integer> v, Iterable<Integer> w) {
         // Note - this won't work if the first match is not the shortest path but not other info is in Iterable
+        if (v == null || w == null)
+            throw new IllegalArgumentException("Iterable value to SAP.ancestor() can not be null.");
         for (int i : v) {
             for (int j : w) {
                 if (i == j) return j;
@@ -178,9 +185,7 @@ Go through From and To paths in one loop, if the values are different push to st
         System.out.println("]");
         System.out.println();
 
-        System.out.println("]");
-        System.out.println();
-        System.out.print("The path between 17 and 19 should be: [ 5 10 12] ");
+        System.out.print("The path between 17 and 19 should be: [ 17 5 10 12 19 ] ");
         System.out.print("[");
         for (int i : sap.getPath(17, 19)) {
             System.out.print(" " + i + " ");
@@ -188,8 +193,33 @@ Go through From and To paths in one loop, if the values are different push to st
         System.out.println("]");
         System.out.println();
 
+        System.out.print("The path between 17 and 17 should be: [ 17 ] ");
+        System.out.print("[");
+        for (int i : sap.getPath(17, 17)) {
+            System.out.print(" " + i + " ");
+        }
         System.out.println("]");
         System.out.println();
+
+        digraph = new Digraph(new In(new File("src/main/resources/digraph1.txt")));
+        sap = new SAP(digraph);
+        System.out.println("]");
+        System.out.println();
+        System.out.print("The path between 10 and 4 should be: [ 4 1 5 10 ] ");
+        System.out.print("[");
+        for (int i : sap.getPath(4, 10)) {
+            System.out.print(" " + i + " ");
+        }
+        System.out.println("]");
+        System.out.println();
+        System.out.println("]");
+        System.out.println();
+
+        System.out.println("ancestor should return 1 for values 3 and 11: " + sap.ancestor(3, 11));
+
+        digraph = new Digraph(new In(new File("src/main/resources/digraph-ambiguous-ancestor.txt")));
+        sap = new SAP(digraph);
+
         System.out.print("The path between 27 and 0 should be: Exception ");
         System.out.print("[");
         try {
