@@ -101,8 +101,11 @@ Go through From and To paths in one loop, if the values are different push to st
                 shortestPath.add(v);
             }
             if (!pathToTo.hasPathTo(v) && pathToFrom.hasPathTo(v)) {
+                /* this rule only works if path to From is going to end up on a common node; one that is connected to
+                * path of to*/
                 shortestPath.add(v);
             }
+            // if I save this last match only keep the minimum, it might fix the ambiguity issue
             if (pathToFrom.hasPathTo(v) && pathToTo.hasPathTo(v)) {
                 shortestPath.add(v);
                 return shortestPath;
@@ -225,6 +228,15 @@ Go through From and To paths in one loop, if the values are different push to st
         System.out.print("[");
         // test 1 and 2 for ambiguous-ancestor
         for (int i : sap.getPath(1, 2)) {
+            System.out.print(" " + i + " ");
+        }
+        System.out.println("]");
+        System.out.println();
+
+        System.out.print("The shortest path between 0 and 2 - in ambiguous-ancestor is [0 1 2]");
+        System.out.print("[");
+        // test 1 and 2 for ambiguous-ancestor
+        for (int i : sap.getPath(0, 2)) {
             System.out.print(" " + i + " ");
         }
         System.out.println("]");
