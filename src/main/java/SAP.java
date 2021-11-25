@@ -1,16 +1,28 @@
 import edu.princeton.cs.algs4.Digraph;
 import edu.princeton.cs.algs4.DirectedCycle;
 import edu.princeton.cs.algs4.In;
+import edu.princeton.cs.algs4.MinPQ;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class SAP {
     boolean hasCycle;
     private Digraph digraph;
 
+    private class Node {
+        private final int id;
+        private final Node prevNode;
+        private final int distFrom;
+        private final int distTo;
+
+        public Node(int id, Node prevNode, int distFrom, int distTo) {
+            this.id = id;
+            this.prevNode = prevNode;
+            this.distFrom = distFrom;
+            this.distTo = distTo;
+        }
+    }
 
     // constructor takes a digraph ( not necessarily a DAG )
     public SAP(Digraph digraph) {
@@ -89,21 +101,25 @@ public class SAP {
 Go through From and To paths in one loop, if the values are different push to stack, and go on, if they are the same,
  push to stack and return*/
         DeluxBFS pathToTo = new DeluxBFS(digraph, to);
-
+        int toDistance = 0, frDistance = 0;
         //System.out.println("Here is everything in pathToTo");
         for (int v = digraph.V() - 1; v >= 0; v--) {
-            if (pathToFrom.hasPathTo(to) && pathToFrom.distTo(to) == 1) {
+            /*if (pathToFrom.hasPathTo(to) && pathToFrom.distTo(to) == 1) {
                 shortestPath.add(from);
                 shortestPath.add(to);
                 return shortestPath;
-            }
+            }*/
             if (pathToTo.hasPathTo(v) && !pathToFrom.hasPathTo(v)) {
+                // todo - Somehow check to see if v gets me closer to from or the common ancestor
                 shortestPath.add(v);
+                frDistance = pathToTo.distTo(v);
             }
             if (!pathToTo.hasPathTo(v) && pathToFrom.hasPathTo(v)) {
                 /* this rule only works if path to From is going to end up on a common node; one that is connected to
-                * path of to*/
+                 * path of to*/
+                // todo - Somehow check to see if v gets me closer to to or the common ancestor
                 shortestPath.add(v);
+                toDistance = pathToFrom.distTo(v);
             }
             // if I save this last match only keep the minimum, it might fix the ambiguity issue
             if (pathToFrom.hasPathTo(v) && pathToTo.hasPathTo(v)) {
@@ -112,6 +128,58 @@ Go through From and To paths in one loop, if the values are different push to st
             }
         }
         return shortestPath;
+    }
+
+    public Iterable<Integer> shortestPath(int from, int to) {
+        List<Integer> sPath = new ArrayList<>();
+        /* Build a min priority queue for to and from based on the node's distance to each node, then use A*:-) to
+         * process nodes */
+        MinPQ<Node> fromQueue = new MinPQ<Node>(new Comparator<Node>() {
+            @Override
+            public int compare(Node o1, Node o2) {
+                if (o1.prevNode.distFrom + 1 + o1.distTo > o2.prevNode.distFrom + 1 + o2.distTo) return 1;
+                else if (o2.prevNode.distFrom + 1 + o2.distTo > o1.prevNode.distFrom + 1 + o1.distTo) return -1;
+                return 0;
+            }
+        });
+        MinPQ<Node> toQueue = new MinPQ<>(new Comparator<Node>() {
+            @Override
+            public int compare(Node o1, Node o2) {
+                if (o1.prevNode.distTo + 1 + o1.distFrom > o2.prevNode.distTo + 1 + o1.distFrom) return 1;
+                else if (o2.prevNode.distTo + 1 + o1.distFrom > o1.prevNode.distTo + 1 + o1.distFrom) return -1;
+                return 0;
+            }
+        });
+        List<Integer> sources = new ArrayList<>();
+        sources.add(from);
+        sources.add(to);
+        DeluxBFS dBFS = new DeluxBFS(digraph, sources);
+        DeluxBFS fDBS = new DeluxBFS(digraph, from);
+        DeluxBFS tDBS = new DeluxBFS(digraph, to);
+        /* the last value is number of moves from source. Given that this priority queue goes from 'to' to 'from', its
+         * last value acts like a counter pretty much */
+        Node toNode = new Node(to, null, fDBS.distTo(to), 0);
+        fromQueue.insert(toNode);
+        Node minNode = fromQueue.delMin();
+        while (minNode.id != from) {
+            // I do not know if I should look at adjacency's of each node or tDBS pathTo. I'll go with pathTo() for now
+            // for (int i : digraph.adj(minNode.id)) {
+            for (int i : tDBS.pathTo(minNode.id)) {
+                if (i != to) { // to address A*'s problem with the node before parent
+                    Node newNode = new Node(i, minNode, fDBS.distTo(i), minNode.distTo + 1);
+                    fromQueue.insert(newNode);
+                }
+            }
+        }
+
+        while (minNode.id != toNode.id) {
+            sPath.add(minNode.id);
+            minNode=minNode.prevNode;
+        }
+        /*It seems like you have to save the path you got above, and do another loop from 'from' node to 'to' node and
+         * and take the shorter path */
+
+        return sPath;
     }
 
     public static void main(String[] args) {
