@@ -4,7 +4,10 @@ import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.MinPQ;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
 public class SAP {
     boolean hasCycle;
@@ -13,14 +16,14 @@ public class SAP {
     private class Node {
         private final int id;
         private final Node prevNode;
-        private final int distFrom;
-        private final int distTo;
+        private final int movesTaken;
+        private final int movesRemaining;
 
-        public Node(int id, Node prevNode, int distFrom, int distTo) {
+        public Node(int id, Node prevNode, int taken, int remaining) {
             this.id = id;
             this.prevNode = prevNode;
-            this.distFrom = distFrom;
-            this.distTo = distTo;
+            this.movesTaken = taken;
+            this.movesRemaining = remaining;
         }
     }
 
@@ -137,16 +140,20 @@ Go through From and To paths in one loop, if the values are different push to st
         MinPQ<Node> fromQueue = new MinPQ<Node>(new Comparator<Node>() {
             @Override
             public int compare(Node o1, Node o2) {
-                if (o1.prevNode.distFrom + 1 + o1.distTo > o2.prevNode.distFrom + 1 + o2.distTo) return 1;
-                else if (o2.prevNode.distFrom + 1 + o2.distTo > o1.prevNode.distFrom + 1 + o1.distTo) return -1;
+                if (o1.prevNode.movesTaken + 1 + o1.movesRemaining > o2.prevNode.movesTaken + 1 + o2.movesRemaining)
+                    return 1;
+                else if (o2.prevNode.movesTaken + 1 + o2.movesRemaining > o1.prevNode.movesTaken + 1 + o1.movesRemaining)
+                    return -1;
                 return 0;
             }
         });
         MinPQ<Node> toQueue = new MinPQ<>(new Comparator<Node>() {
             @Override
             public int compare(Node o1, Node o2) {
-                if (o1.prevNode.distTo + 1 + o1.distFrom > o2.prevNode.distTo + 1 + o1.distFrom) return 1;
-                else if (o2.prevNode.distTo + 1 + o1.distFrom > o1.prevNode.distTo + 1 + o1.distFrom) return -1;
+                if (o1.prevNode.movesTaken + 1 + o1.movesRemaining > o2.prevNode.movesTaken + 1 + o1.movesRemaining)
+                    return 1;
+                else if (o2.prevNode.movesTaken + 1 + o1.movesRemaining > o1.prevNode.movesTaken + 1 + o1.movesRemaining)
+                    return -1;
                 return 0;
             }
         });
@@ -156,9 +163,8 @@ Go through From and To paths in one loop, if the values are different push to st
         DeluxBFS dBFS = new DeluxBFS(digraph, sources);
         DeluxBFS fDBS = new DeluxBFS(digraph, from);
         DeluxBFS tDBS = new DeluxBFS(digraph, to);
-        /* the last value is number of moves from source. Given that this priority queue goes from 'to' to 'from', its
-         * last value acts like a counter pretty much */
-        Node toNode = new Node(to, null, fDBS.distTo(to), 0);
+        /* The last value might also be tDBS.distTo(from) todo: check the numbers tomorrow */
+        Node toNode = new Node(to, null, 0, tDBS.distTo(from));
         fromQueue.insert(toNode);
         Node minNode = fromQueue.delMin();
         while (minNode.id != from) {
@@ -166,16 +172,19 @@ Go through From and To paths in one loop, if the values are different push to st
             // for (int i : digraph.adj(minNode.id)) {
             for (int i : tDBS.pathTo(minNode.id)) {
                 if (i != to) { // to address A*'s problem with the node before parent
-                    Node newNode = new Node(i, minNode, fDBS.distTo(i), minNode.distTo + 1);
+                    Node newNode = new Node(i, minNode, minNode.movesTaken + 1, tDBS.distTo(from));
                     fromQueue.insert(newNode);
                 }
             }
+            minNode=fromQueue.delMin();
+        }
+        if (minNode.id == from) {
+            while (minNode.id != toNode.id) {
+                sPath.add(minNode.id);
+                minNode = minNode.prevNode;
+            }
         }
 
-        while (minNode.id != toNode.id) {
-            sPath.add(minNode.id);
-            minNode=minNode.prevNode;
-        }
         /*It seems like you have to save the path you got above, and do another loop from 'from' node to 'to' node and
          * and take the shorter path */
 
