@@ -12,7 +12,7 @@ import java.util.List;
 public class SAP {
     boolean hasCycle;
     private Digraph digraph;
-
+int ancestor;
     private class Node {
         private final int id;
         private final Node prevNode;
@@ -43,18 +43,6 @@ public class SAP {
         return getPath(v, w).size();
     }
 
-    // a common ancestor of v and w that participates in a shortest ancestral path; -1 if no such path
-    public int ancestor(int v, int w) {
-        DeluxBFS pathToFrom = new DeluxBFS(digraph, v);
-        DeluxBFS pathToTo = new DeluxBFS(digraph, w);
-        for (int i = digraph.V() - 1; i >= 0; i--) {
-            if (pathToFrom.hasPathTo(i) && pathToTo.hasPathTo(i)) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
     // length of the shortest ancestral path between any vertex in v and any vertex in w; -1 if no such path
     public int length(Iterable<Integer> v, Iterable<Integer> w) {
         if (v == null || w == null)
@@ -67,6 +55,12 @@ public class SAP {
             }
         }
         return -1;
+    }
+
+    // a common ancestor of v and w that participates in a shortest ancestral path; -1 if no such path
+    public int ancestor(int v, int w) {
+
+        return ancestor;
     }
 
     // a common ancestor that participates in the shortest ancestral path; -1 if no such path
@@ -166,34 +160,71 @@ Go through From and To paths in one loop, if the values are different push to st
         /* The last value might also be tDBS.distTo(from) todo: check the numbers tomorrow */
         Node toNode = new Node(to, null, 0, tDBS.distTo(from));
         fromQueue.insert(toNode);
-        Node minNode = fromQueue.delMin();
-        while (minNode.id != from) {
-            // I do not know if I should look at adjacency's of each node or tDBS pathTo. I'll go with pathTo() for now
-            // for (int i : digraph.adj(minNode.id)) {
-            for (int i : tDBS.pathTo(minNode.id)) {
-                if (i != to) { // to address A*'s problem with the node before parent
-                    Node newNode = new Node(i, minNode, minNode.movesTaken + 1, tDBS.distTo(from));
-                    fromQueue.insert(newNode);
+        Node fromNode = new Node(from, null, 0, fDBS.distTo(to));
+        toQueue.insert(fromNode);
+        Node minFNode = fromQueue.delMin();
+        Node minTNode = toQueue.delMin();
+        while (fromNode.id != toNode.id) {
+            if (!fromQueue.isEmpty()) {
+                for (int i : digraph.adj(minFNode.id)) {
+                    if (minFNode.prevNode == null) {
+                        Node newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(from));
+                        fromQueue.insert(newNode);
+                    } else if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
+                        Node newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(from));
+                        fromQueue.insert(newNode);
+                    }
                 }
+                minFNode = fromQueue.delMin();
+                if (minFNode.id == minTNode.id) break;
             }
-            minNode=fromQueue.delMin();
-        }
-        if (minNode.id == from) {
-            while (minNode.id != toNode.id) {
-                sPath.add(minNode.id);
-                minNode = minNode.prevNode;
+
+            if (!toQueue.isEmpty()) {
+                for (int i : digraph.adj(minTNode.id)) {
+                    if (minTNode.prevNode == null) {
+                        Node newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(to));
+                        toQueue.insert(newNode);
+                    } else if (i != minTNode.prevNode.id) {
+                        Node newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(to));
+                        toQueue.insert(newNode);
+                    }
+                }
+                minTNode = toQueue.delMin();
+                if (minFNode.id == minTNode.id) break;
             }
         }
-
-        /*It seems like you have to save the path you got above, and do another loop from 'from' node to 'to' node and
-         * and take the shorter path */
-
+        ancestor=fromNode.id; // which should be the same as tNodeId
+        while (true) {
+            if (!sPath.contains(minFNode.id)) {
+                sPath.add(minFNode.id);
+            }
+            if (minFNode.prevNode!=null) minFNode = minFNode.prevNode;
+            if (!sPath.contains(minTNode.id)){
+                sPath.add(minTNode.id);
+            }
+            minTNode=minTNode.prevNode;
+            if (minTNode.prevNode==null) {
+                if (minFNode.prevNode==null) break;
+            }
+        }
         return sPath;
     }
 
     public static void main(String[] args) {
-        Digraph digraph = new Digraph(new In(args[0]));
+        Digraph digraph = new Digraph(new In(new File("src/main/resources/digraph-ambiguous-ancestor.txt")));
         SAP sap = new SAP(digraph);
+        System.out.println(sap.ancestor(1, 2));
+        System.out.println(sap.ancestor(0, 2));
+        System.out.println(sap.ancestor(0, 1));
+        System.out.println(sap.ancestor(0, 10));
+        digraph = new Digraph(new In(new File("src/main/resources/digraph25.txt")));
+        sap = new SAP(digraph);
+        sap.ancestor(19, 24);
+        sap.ancestor(1, 2);
+        sap.ancestor(0, 24);
+        digraph = new Digraph(new In(args[0]));
+        sap = new SAP(digraph);
+        sap.shortestPath(3, 4);
         System.out.print("The path between 1 and 2 should be [0 1 2] ");
         System.out.print("[");
         for (int i : sap.getPath(1, 2)) {
