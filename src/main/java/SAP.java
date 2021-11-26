@@ -12,7 +12,8 @@ import java.util.List;
 public class SAP {
     boolean hasCycle;
     private Digraph digraph;
-int ancestor;
+    int ancestor = -1;
+
     private class Node {
         private final int id;
         private final Node prevNode;
@@ -59,7 +60,7 @@ int ancestor;
 
     // a common ancestor of v and w that participates in a shortest ancestral path; -1 if no such path
     public int ancestor(int v, int w) {
-
+        shortestPath(v, w);
         return ancestor;
     }
 
@@ -70,10 +71,10 @@ int ancestor;
             throw new IllegalArgumentException("Iterable value to SAP.ancestor() can not be null.");
         for (int i : v) {
             for (int j : w) {
-                if (i == j) return j;
+                shortestPath(i, j);
             }
         }
-        return -1;
+        return ancestor;
     }
 
 
@@ -193,25 +194,25 @@ Go through From and To paths in one loop, if the values are different push to st
                 if (minFNode.id == minTNode.id) break;
             }
         }
-        ancestor=fromNode.id; // which should be the same as tNodeId
+        ancestor = fromNode.id; // which should be the same as tNodeId
         while (true) {
             if (!sPath.contains(minFNode.id)) {
                 sPath.add(minFNode.id);
             }
-            if (minFNode.prevNode!=null) minFNode = minFNode.prevNode;
-            if (!sPath.contains(minTNode.id)){
+            if (minFNode.prevNode != null) minFNode = minFNode.prevNode;
+            if (!sPath.contains(minTNode.id)) {
                 sPath.add(minTNode.id);
             }
-            minTNode=minTNode.prevNode;
-            if (minTNode.prevNode==null) {
-                if (minFNode.prevNode==null) break;
+            minTNode = minTNode.prevNode;
+            if (minTNode.prevNode == null) {
+                if (minFNode.prevNode == null) break;
             }
         }
         return sPath;
     }
 
     public static void main(String[] args) {
-        Digraph digraph = new Digraph(new In(new File("src/main/resources/digraph-ambiguous-ancestor.txt")));
+        /*Digraph digraph = new Digraph(new In(new File("src/main/resources/digraph-ambiguous-ancestor.txt")));
         SAP sap = new SAP(digraph);
         System.out.println(sap.ancestor(1, 2));
         System.out.println(sap.ancestor(0, 2));
@@ -221,9 +222,10 @@ Go through From and To paths in one loop, if the values are different push to st
         sap = new SAP(digraph);
         sap.ancestor(19, 24);
         sap.ancestor(1, 2);
-        sap.ancestor(0, 24);
-        digraph = new Digraph(new In(args[0]));
-        sap = new SAP(digraph);
+        sap.ancestor(0, 24);*/
+        Digraph digraph = new Digraph(new In(args[0]));
+        SAP sap = new SAP(digraph);
+        sap.shortestPath(1, 2);
         sap.shortestPath(3, 4);
         System.out.print("The path between 1 and 2 should be [0 1 2] ");
         System.out.print("[");
