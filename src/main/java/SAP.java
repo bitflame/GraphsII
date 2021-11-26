@@ -4,10 +4,7 @@ import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.MinPQ;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class SAP {
     boolean hasCycle;
@@ -129,15 +126,28 @@ Go through From and To paths in one loop, if the values are different push to st
     }
 
     public Iterable<Integer> shortestPath(int from, int to) {
+
         List<Integer> sPath = new ArrayList<>();
+        if (from == to) {
+            sPath.add(from);
+            return sPath;
+        }
         /* Build a min priority queue for to and from based on the node's distance to each node, then use A*:-) to
          * process nodes */
+
+        List<Integer> sources = new ArrayList<>();
+        sources.add(from);
+        sources.add(to);
+        DeluxBFS dBFS = new DeluxBFS(digraph, sources);
+        DeluxBFS fDBS = new DeluxBFS(digraph, from);
+        DeluxBFS tDBS = new DeluxBFS(digraph, to);
         MinPQ<Node> fromQueue = new MinPQ<Node>(new Comparator<Node>() {
             @Override
             public int compare(Node o1, Node o2) {
-                if (o1.prevNode.movesTaken + 1 + o1.movesRemaining > o2.prevNode.movesTaken + 1 + o2.movesRemaining)
+                // number of moves the parent has made plus 1 plus the number moves I have to take from where I am
+                if (o1.prevNode.movesTaken + 1 + tDBS.distTo(o1.id) > o2.prevNode.movesTaken + 1 + tDBS.distTo(o2.id))
                     return 1;
-                else if (o2.prevNode.movesTaken + 1 + o2.movesRemaining > o1.prevNode.movesTaken + 1 + o1.movesRemaining)
+                else if (o2.prevNode.movesTaken + 1 + tDBS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + tDBS.distTo(o1.id))
                     return -1;
                 return 0;
             }
@@ -145,77 +155,93 @@ Go through From and To paths in one loop, if the values are different push to st
         MinPQ<Node> toQueue = new MinPQ<>(new Comparator<Node>() {
             @Override
             public int compare(Node o1, Node o2) {
-                if (o1.prevNode.movesTaken + 1 + o1.movesRemaining > o2.prevNode.movesTaken + 1 + o1.movesRemaining)
+                if (o1.prevNode.movesTaken + 1 + fDBS.distTo(o1.id) > o2.prevNode.movesTaken + 1 + fDBS.distTo(o2.id))
                     return 1;
-                else if (o2.prevNode.movesTaken + 1 + o1.movesRemaining > o1.prevNode.movesTaken + 1 + o1.movesRemaining)
+                else if (o2.prevNode.movesTaken + 1 + fDBS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + fDBS.distTo(o1.id))
                     return -1;
                 return 0;
             }
         });
-        List<Integer> sources = new ArrayList<>();
-        sources.add(from);
-        sources.add(to);
-        DeluxBFS dBFS = new DeluxBFS(digraph, sources);
-        DeluxBFS fDBS = new DeluxBFS(digraph, from);
-        DeluxBFS tDBS = new DeluxBFS(digraph, to);
         /* The last value might also be tDBS.distTo(from) todo: check the numbers tomorrow */
-        Node toNode = new Node(to, null, 0, tDBS.distTo(from));
-        fromQueue.insert(toNode);
-        Node fromNode = new Node(from, null, 0, fDBS.distTo(to));
-        toQueue.insert(fromNode);
+        Node fromNode = new Node(from, null, 0, tDBS.distTo(from));
+        fromQueue.insert(fromNode);
+        Node toNode = new Node(to, null, 0, fDBS.distTo(to));
+        toQueue.insert(toNode);
         Node minFNode = fromQueue.delMin();
         Node minTNode = toQueue.delMin();
+        for (int i : digraph.adj(minTNode.id)) {
+            Node newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
+            toQueue.insert(newNode);
+        }
         for (int i : digraph.adj(minFNode.id)) {
-            Node newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(from));
+            Node newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
             fromQueue.insert(newNode);
         }
         minFNode = fromQueue.delMin();
         while (minFNode.id != minTNode.id) {
-            if (!fromQueue.isEmpty()) {
-                for (int i : digraph.adj(minFNode.id)) {
-                    if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
-                        Node newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(from));
-                        fromQueue.insert(newNode);
-                    }
+
+            for (int i : digraph.adj(minFNode.id)) {
+                if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
+                    Node newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
+                    fromQueue.insert(newNode);
                 }
-                minFNode = fromQueue.delMin();
-                if (minFNode.id == minTNode.id) break;
             }
+            if (!fromQueue.isEmpty()) minFNode = fromQueue.delMin();
+            if (minFNode.id == minTNode.id) break;
+            if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
+            if (minFNode.id == minTNode.id) break;
             for (int i : digraph.adj(minTNode.id)) {
-                Node newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(to));
+                Node newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
                 toQueue.insert(newNode);
             }
-            minTNode=toQueue.delMin();
-            if (minFNode.id==minTNode.id) break;
-            if (!toQueue.isEmpty()) {
-                for (int i : digraph.adj(minTNode.id)) {
-                    if (i != minTNode.prevNode.id) {
-                        Node newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(to));
-                        toQueue.insert(newNode);
-                    }
-                }
-                minTNode = toQueue.delMin();
-                if (minFNode.id == minTNode.id) break;
-            }
+            if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
+            if (minFNode.id == minTNode.id) break;
+        }
+        while(minTNode.prevNode!=null && minFNode.prevNode.id==minTNode.prevNode.id) {
+            minFNode=minFNode.prevNode;
+            minTNode=minTNode.prevNode;
         }
         ancestor = minFNode.id; // which should be the same as minFNode.id
         while (true) {
             if (!sPath.contains(minFNode.id)) {
                 sPath.add(minFNode.id);
             }
+            if (minFNode.prevNode == null && minTNode.prevNode == null) break;
             if (minFNode.prevNode != null) minFNode = minFNode.prevNode;
-            if (!sPath.contains(minFNode.id)) {
-                sPath.add(minFNode.id);
+            /* I can double check here also that I have the shortest path by testing minFNode==minTNode */
+            if (minTNode.prevNode != null) {
+                minTNode = minTNode.prevNode;
             }
-            minTNode = minTNode.prevNode;
             if (!sPath.contains(minTNode.id)) {
                 sPath.add(minTNode.id);
             }
-            if (minTNode.prevNode == null) {
-                if (minFNode.prevNode == null) break;
-            }
         }
+        Collections.sort(sPath);
         return sPath;
+    }
+
+    public Iterable<Integer> shortPath(int from, int to) {
+        List<Integer> thePath = new ArrayList<>();
+        DeluxBFS currentSearch;
+        List<Integer> s;
+        List<Integer> tempPath = new ArrayList<>();
+        for (int i = 0; i < digraph.V(); i++) {
+            s = new ArrayList<>(Arrays.asList(from, to, i));
+            currentSearch = new DeluxBFS(digraph, s);
+            for (int j = 0; j < digraph.V(); j++) {
+                if (currentSearch.hasPathTo(j))
+                    thePath.add(j);
+            }
+            if (!tempPath.isEmpty() && tempPath.size() > thePath.size() && thePath.contains(Arrays.asList(from, to))) {
+                tempPath = thePath;
+
+            } else if (tempPath.isEmpty()) {
+                tempPath = thePath;
+
+            }
+            thePath = new ArrayList<>();
+        }
+        return tempPath;
     }
 
     public static void main(String[] args) {
@@ -232,9 +258,24 @@ Go through From and To paths in one loop, if the values are different push to st
         sap.ancestor(0, 24);*/
         Digraph digraph = new Digraph(new In(args[0]));
         SAP sap = new SAP(digraph);
+        System.out.print("Using shortPath() - The path between 4 and 6 should be [0 1 2 4 6] : ");
+        System.out.print("[");
+        for (int i : sap.shortestPath(4, 6)) {
+            System.out.print(" " + i + " ");
+        }
+        System.out.println("]");
+        System.out.println();
+
         System.out.print("Using A* in shortestPath() - The path between 1 and 2 should be [0 1 2] : ");
         System.out.print("[");
-        for (int i:sap.shortestPath(1,2)) {
+        for (int i : sap.shortestPath(1, 2)) {
+            System.out.print(" " + i + " ");
+        }
+        System.out.println("]");
+        System.out.println();
+        System.out.print("Using A* in shortestPath() - The path between 1 and 2 should be [0 1 2] : ");
+        System.out.print("[");
+        for (int i : sap.shortestPath(3, 4)) {
             System.out.print(" " + i + " ");
         }
         System.out.println("]");
