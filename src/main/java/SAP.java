@@ -23,6 +23,12 @@ public class SAP {
             this.movesTaken = taken;
             this.movesRemaining = remaining;
         }
+        private class Ancestor {
+            boolean shortest;
+            List<Integer> ancPath;
+            int ancSource;
+            int ancDest;
+        }
     }
 
     // constructor takes a digraph ( not necessarily a DAG )
@@ -64,11 +70,15 @@ public class SAP {
     // a common ancestor that participates in the shortest ancestral path; -1 if no such path
     public int ancestor(Iterable<Integer> v, Iterable<Integer> w) {
         // Note - this won't work if the first match is not the shortest path but not other info is in Iterable
+        int currentAncestor = ancestor;
+        DeluxBFS deluxBFS;
         if (v == null || w == null)
             throw new IllegalArgumentException("Iterable value to SAP.ancestor() can not be null.");
         for (int i : v) {
             for (int j : w) {
                 shortestPath(i, j);
+                deluxBFS= new DeluxBFS(digraph,Arrays.asList(i,j));
+
             }
         }
         return ancestor;
