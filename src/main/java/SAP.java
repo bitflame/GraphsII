@@ -165,13 +165,15 @@ Go through From and To paths in one loop, if the values are different push to st
         toQueue.insert(fromNode);
         Node minFNode = fromQueue.delMin();
         Node minTNode = toQueue.delMin();
-        while (fromNode.id != toNode.id) {
+        for (int i : digraph.adj(minFNode.id)) {
+            Node newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(from));
+            fromQueue.insert(newNode);
+        }
+        minFNode = fromQueue.delMin();
+        while (minFNode.id != minTNode.id) {
             if (!fromQueue.isEmpty()) {
                 for (int i : digraph.adj(minFNode.id)) {
-                    if (minFNode.prevNode == null) {
-                        Node newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(from));
-                        fromQueue.insert(newNode);
-                    } else if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
+                    if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
                         Node newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(from));
                         fromQueue.insert(newNode);
                     }
@@ -179,13 +181,15 @@ Go through From and To paths in one loop, if the values are different push to st
                 minFNode = fromQueue.delMin();
                 if (minFNode.id == minTNode.id) break;
             }
-
+            for (int i : digraph.adj(minTNode.id)) {
+                Node newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(to));
+                toQueue.insert(newNode);
+            }
+            minTNode=toQueue.delMin();
+            if (minFNode.id==minTNode.id) break;
             if (!toQueue.isEmpty()) {
                 for (int i : digraph.adj(minTNode.id)) {
-                    if (minTNode.prevNode == null) {
-                        Node newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(to));
-                        toQueue.insert(newNode);
-                    } else if (i != minTNode.prevNode.id) {
+                    if (i != minTNode.prevNode.id) {
                         Node newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(to));
                         toQueue.insert(newNode);
                     }
@@ -194,16 +198,19 @@ Go through From and To paths in one loop, if the values are different push to st
                 if (minFNode.id == minTNode.id) break;
             }
         }
-        ancestor = fromNode.id; // which should be the same as tNodeId
+        ancestor = minFNode.id; // which should be the same as minFNode.id
         while (true) {
             if (!sPath.contains(minFNode.id)) {
                 sPath.add(minFNode.id);
             }
             if (minFNode.prevNode != null) minFNode = minFNode.prevNode;
+            if (!sPath.contains(minFNode.id)) {
+                sPath.add(minFNode.id);
+            }
+            minTNode = minTNode.prevNode;
             if (!sPath.contains(minTNode.id)) {
                 sPath.add(minTNode.id);
             }
-            minTNode = minTNode.prevNode;
             if (minTNode.prevNode == null) {
                 if (minFNode.prevNode == null) break;
             }
@@ -225,6 +232,14 @@ Go through From and To paths in one loop, if the values are different push to st
         sap.ancestor(0, 24);*/
         Digraph digraph = new Digraph(new In(args[0]));
         SAP sap = new SAP(digraph);
+        System.out.print("Using A* in shortestPath() - The path between 1 and 2 should be [0 1 2] : ");
+        System.out.print("[");
+        for (int i:sap.shortestPath(1,2)) {
+            System.out.print(" " + i + " ");
+        }
+        System.out.println("]");
+        System.out.println();
+
         sap.shortestPath(1, 2);
         sap.shortestPath(3, 4);
         System.out.print("The path between 1 and 2 should be [0 1 2] ");
