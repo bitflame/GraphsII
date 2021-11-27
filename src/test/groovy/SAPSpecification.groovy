@@ -84,7 +84,7 @@ class SAPSpecification extends Specification {
         "digraph1.txt"  | 3  | 11 | 4
         "digraph1.txt"  | 9  | 12 | 3
         "digraph1.txt"  | 7  | 2  | 4
-        "digraph1.txt"  | 1  | 6  | -1
+        "digraph1.txt"  | 1  | 6  | -1// todo - Make sure to fix this. Digraph1.txt does not have node 6
     }
 
     def "SAP  ancestor() for Iterables should return a common node between to Iterables"() {
@@ -96,8 +96,8 @@ class SAPSpecification extends Specification {
         sap.ancestor(iter1, iter2) == result
 
         where:
-        file            | iter1     | iter2     | result
-        "digraph25.txt" | [0, 1, 2] | [1, 3, 4] | 1
+        file            | iter1        | iter2       | result
+        "digraph25.txt" | [13, 23, 24] | [6, 16, 17] | [3]
     }
 
     def "SAP ancestor() for Integer ids should return a common node between to node ids"() {
@@ -109,16 +109,16 @@ class SAPSpecification extends Specification {
         sap.ancestor(from, to) == result
 
         where:
-        file            | from | to | result
-        "digraph25.txt" | 1    | 2  | 0
-        "digraph25.txt" | 3    | 4  | 1
-        "digraph25.txt" | 5    | 6  | 2
-        "digraph25.txt" | 19    | 24  | 12
-        "digraph25.txt" | 18    | 1  | 0
-        "digraph25.txt" | 22    | 19  | 0
+        file                             | from | to | result
+        "digraph25.txt"                  | 1    | 2  | 0
+        "digraph25.txt"                  | 3    | 4  | 1
+        "digraph25.txt"                  | 5    | 6  | 2
+        "digraph25.txt"                  | 19   | 24 | 12
+        "digraph25.txt"                  | 18   | 1  | 0
+        "digraph25.txt"                  | 22   | 19 | 0
         "digraph-ambiguous-ancestor.txt" | 1    | 2  | 2
         "digraph-ambiguous-ancestor.txt" | 0    | 2  | 2
-        "digraph-ambiguous-ancestor.txt" | 0    | 10  | 10
+        "digraph-ambiguous-ancestor.txt" | 0    | 10 | 10
     }
 
     def "SAP ancestor() should return a common node between two Integer input values"() {

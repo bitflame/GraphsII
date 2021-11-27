@@ -23,6 +23,7 @@ public class SAP {
             this.movesTaken = taken;
             this.movesRemaining = remaining;
         }
+
         private class Ancestor {
             boolean shortest;
             List<Integer> ancPath;
@@ -71,68 +72,121 @@ public class SAP {
     public int ancestor(Iterable<Integer> v, Iterable<Integer> w) {
         // Note - this won't work if the first match is not the shortest path but not other info is in Iterable
         int currentAncestor = ancestor;
-        DeluxBFS deluxBFS;
+        int previousAncestor = ancestor;
+        List<Integer> prevShortPath = new ArrayList<>();
+        List<Integer> currShortPath = new ArrayList<>();
         if (v == null || w == null)
             throw new IllegalArgumentException("Iterable value to SAP.ancestor() can not be null.");
         for (int i : v) {
             for (int j : w) {
-                shortestPath(i, j);
-                deluxBFS= new DeluxBFS(digraph,Arrays.asList(i,j));
-
+                for (int k : getPath(i, j)) {
+                    currShortPath.add(k);
+                    currentAncestor = ancestor;
+                    if (prevShortPath.size() > currShortPath.size()) {
+                        prevShortPath = currShortPath;
+                        previousAncestor = currentAncestor;
+                        currShortPath = new ArrayList<>();
+                    }
+                }
             }
         }
-        return ancestor;
+        return previousAncestor;
     }
 
 
     public List<Integer> getPath(int from, int to) {
-        List<Integer> shortestPath = new ArrayList<>();
-        List<Integer> sources = new ArrayList<Integer>(Arrays.asList(from, to));
-        // get the path from each point to other points in the graph starting from zero, and collect only the
-        // nodes common in both paths, and the least distance
-        // If there are two of them add both, if there is only one add it and return shortest path
-        // List of node, and distance
-        DeluxBFS pathToFrom = new DeluxBFS(digraph, from);
-   /*   print what is in these two; up and down the line and see if you can filter out unwanted nodes from the sources
-        path
-        System.out.println("\nHere is everything in pathToFrom: ");
-        for (int v = 0; v < digraph.V() ; v++) {
-            if (pathToFrom.hasPathTo(v)) {
-                for (int i:pathToFrom.pathTo(v)) {
-                    System.out.print(i);
+
+        List<Integer> sPath = new ArrayList<>();
+        if (from == to) {
+            sPath.add(from);
+            return sPath;
+        }
+        /* Build a min priority queue for to and from based on the node's distance to each node, then use A*:-) to
+         * process nodes */
+
+        List<Integer> sources = new ArrayList<>();
+        sources.add(from);
+        sources.add(to);
+        DeluxBFS dBFS = new DeluxBFS(digraph, sources);
+        DeluxBFS fDBS = new DeluxBFS(digraph, from);
+        DeluxBFS tDBS = new DeluxBFS(digraph, to);
+        MinPQ<Node> fromQueue = new MinPQ<Node>(new Comparator<Node>() {
+            @Override
+            public int compare(Node o1, Node o2) {
+                // number of moves the parent has made plus 1 plus the number moves I have to take from where I am
+                if (o1.prevNode.movesTaken + 1 + tDBS.distTo(o1.id) > o2.prevNode.movesTaken + 1 + tDBS.distTo(o2.id))
+                    return 1;
+                else if (o2.prevNode.movesTaken + 1 + tDBS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + tDBS.distTo(o1.id))
+                    return -1;
+                return 0;
+            }
+        });
+        MinPQ<Node> toQueue = new MinPQ<>(new Comparator<Node>() {
+            @Override
+            public int compare(Node o1, Node o2) {
+                if (o1.prevNode.movesTaken + 1 + fDBS.distTo(o1.id) > o2.prevNode.movesTaken + 1 + fDBS.distTo(o2.id))
+                    return 1;
+                else if (o2.prevNode.movesTaken + 1 + fDBS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + fDBS.distTo(o1.id))
+                    return -1;
+                return 0;
+            }
+        });
+        /* The last value might also be tDBS.distTo(from) todo: check the numbers tomorrow */
+        Node fromNode = new Node(from, null, 0, tDBS.distTo(from));
+        fromQueue.insert(fromNode);
+        Node toNode = new Node(to, null, 0, fDBS.distTo(to));
+        toQueue.insert(toNode);
+        Node minFNode = fromQueue.delMin();
+        Node minTNode = toQueue.delMin();
+        for (int i : digraph.adj(minTNode.id)) {
+            Node newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
+            toQueue.insert(newNode);
+        }
+        for (int i : digraph.adj(minFNode.id)) {
+            Node newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
+            fromQueue.insert(newNode);
+        }
+        minFNode = fromQueue.delMin();
+        while (minFNode.id != minTNode.id) {
+
+            for (int i : digraph.adj(minFNode.id)) {
+                if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
+                    Node newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
+                    fromQueue.insert(newNode);
                 }
             }
+            if (!fromQueue.isEmpty()) minFNode = fromQueue.delMin();
+            if (minFNode.id == minTNode.id) break;
+            if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
+            if (minFNode.id == minTNode.id) break;
+            for (int i : digraph.adj(minTNode.id)) {
+                Node newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
+                toQueue.insert(newNode);
+            }
+            if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
+            if (minFNode.id == minTNode.id) break;
         }
-Go through From and To paths in one loop, if the values are different push to stack, and go on, if they are the same,
- push to stack and return*/
-        DeluxBFS pathToTo = new DeluxBFS(digraph, to);
-        int toDistance = 0, frDistance = 0;
-        //System.out.println("Here is everything in pathToTo");
-        for (int v = digraph.V() - 1; v >= 0; v--) {
-            /*if (pathToFrom.hasPathTo(to) && pathToFrom.distTo(to) == 1) {
-                shortestPath.add(from);
-                shortestPath.add(to);
-                return shortestPath;
-            }*/
-            if (pathToTo.hasPathTo(v) && !pathToFrom.hasPathTo(v)) {
-                // todo - Somehow check to see if v gets me closer to from or the common ancestor
-                shortestPath.add(v);
-                frDistance = pathToTo.distTo(v);
+        while (minTNode.prevNode != null && minFNode.prevNode.id == minTNode.prevNode.id) {
+            minFNode = minFNode.prevNode;
+            minTNode = minTNode.prevNode;
+        }
+        ancestor = minFNode.id; // which should be the same as minFNode.id
+        while (true) {
+            if (!sPath.contains(minFNode.id)) {
+                sPath.add(minFNode.id);
             }
-            if (!pathToTo.hasPathTo(v) && pathToFrom.hasPathTo(v)) {
-                /* this rule only works if path to From is going to end up on a common node; one that is connected to
-                 * path of to*/
-                // todo - Somehow check to see if v gets me closer to to or the common ancestor
-                shortestPath.add(v);
-                toDistance = pathToFrom.distTo(v);
+            if (minFNode.prevNode == null && minTNode.prevNode == null) break;
+            if (minFNode.prevNode != null) minFNode = minFNode.prevNode;
+            /* I can double check here also that I have the shortest path by testing minFNode==minTNode */
+            if (minTNode.prevNode != null) {
+                minTNode = minTNode.prevNode;
             }
-            // if I save this last match only keep the minimum, it might fix the ambiguity issue
-            if (pathToFrom.hasPathTo(v) && pathToTo.hasPathTo(v)) {
-                shortestPath.add(v);
-                return shortestPath;
+            if (!sPath.contains(minTNode.id)) {
+                sPath.add(minTNode.id);
             }
         }
-        return shortestPath;
+        Collections.sort(sPath);
+        return sPath;
     }
 
     public Iterable<Integer> shortestPath(int from, int to) {
@@ -207,9 +261,9 @@ Go through From and To paths in one loop, if the values are different push to st
             if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
             if (minFNode.id == minTNode.id) break;
         }
-        while(minTNode.prevNode!=null && minFNode.prevNode.id==minTNode.prevNode.id) {
-            minFNode=minFNode.prevNode;
-            minTNode=minTNode.prevNode;
+        while (minTNode.prevNode != null && minFNode.prevNode.id == minTNode.prevNode.id) {
+            minFNode = minFNode.prevNode;
+            minTNode = minTNode.prevNode;
         }
         ancestor = minFNode.id; // which should be the same as minFNode.id
         while (true) {
