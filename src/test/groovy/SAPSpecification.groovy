@@ -31,33 +31,6 @@ class SAPSpecification extends Specification {
         "digraph-ambiguous-ancestor.txt" | 1    | 2  | [1, 2]
     }
 
-    def "SAP shortestPath() Should return the shortest path in the graph"() {
-        when:
-        Digraph digraph = new Digraph(new In(file))
-        SAP sap = new SAP(digraph)
-
-        then:
-        sap.shortestPath(from, to) == shortest
-
-        where:
-        file                             | from | to | shortest
-        "digraph25.txt"                  | 1    | 2  | [0, 1, 2]
-        "digraph25.txt"                  | 3    | 4  | [1, 3, 4]
-        "digraph25.txt"                  | 4    | 3  | [1, 3, 4]
-        "digraph25.txt"                  | 5    | 6  | [2, 5, 6]
-        "digraph25.txt"                  | 6    | 5  | [2, 5, 6]
-        "digraph25.txt"                  | 4    | 6  | [0, 1, 2, 4, 6]
-        "digraph25.txt"                  | 1    | 6  | [0, 1, 2, 6]
-        "digraph25.txt"                  | 17   | 24 | [5, 10, 12, 17, 20, 24]
-        "digraph25.txt"                  | 23   | 24 | [20, 23, 24]
-        "digraph25.txt"                  | 11   | 14 | [0, 1, 2, 3, 5, 7, 11, 14]
-        "digraph25.txt"                  | 17   | 19 | [5, 10, 12, 17, 19]
-        "digraph25.txt"                  | 17   | 17 | [17]
-        "digraph1.txt"                   | 2    | 0  | [0, 2]
-        "digraph1.txt"                   | 10   | 4  | [1, 4, 5, 10]
-        "digraph1.txt"                   | 3    | 11 | [1, 3, 5, 10, 11]
-        "digraph-ambiguous-ancestor.txt" | 1    | 2  | [1, 2]
-    }
 
     def "SAP length() should return the length of the shortest path between two points"() {
         when:
@@ -84,7 +57,7 @@ class SAPSpecification extends Specification {
         "digraph1.txt"  | 3  | 11 | 4
         "digraph1.txt"  | 9  | 12 | 3
         "digraph1.txt"  | 7  | 2  | 4
-        //"digraph1.txt"  | 1  | 6  | -1// todo - Make sure to fix this. Digraph1.txt does not have node 6
+        "digraph1.txt"  | 1  | 6  | -1
     }
 
     def "SAP  ancestor() for Iterables should return a common node between to Iterables"() {
@@ -97,7 +70,7 @@ class SAPSpecification extends Specification {
 
         where:
         file            | iter1        | iter2       | result
-        "digraph25.txt" | [13, 23, 24] | [6, 16, 17] | [3]
+        "digraph25.txt" | [13, 23, 24] | [6, 16, 17] | 3
     }
 
     def "SAP ancestor() for Integer ids should return a common node between to node ids"() {

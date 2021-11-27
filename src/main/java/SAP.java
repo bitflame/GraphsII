@@ -45,7 +45,8 @@ public class SAP {
 
     // length of shortest ancestral path between v and w; -1 if no such path
     public int length(int v, int w) {
-        return getPath(v, w).size();
+        if (getPath(v, w) != null) return getPath(v, w).size();
+        else return -1;
     }
 
     // length of the shortest ancestral path between any vertex in v and any vertex in w; -1 if no such path
@@ -64,29 +65,27 @@ public class SAP {
 
     // a common ancestor of v and w that participates in a shortest ancestral path; -1 if no such path
     public int ancestor(int v, int w) {
-        shortestPath(v, w);
+        if (getPath(v, w) != null) getPath(v, w);
         return ancestor;
     }
 
     // a common ancestor that participates in the shortest ancestral path; -1 if no such path
     public int ancestor(Iterable<Integer> v, Iterable<Integer> w) {
         // Note - this won't work if the first match is not the shortest path but not other info is in Iterable
-        int currentAncestor = ancestor;
-        int previousAncestor = ancestor;
-        List<Integer> prevShortPath = new ArrayList<>();
-        List<Integer> currShortPath = new ArrayList<>();
+        int currentAncestor = ancestor, previousAncestor = ancestor;
+        List<Integer> prevShortPath = getPath(v.iterator().next(), w.iterator().next());
+        previousAncestor = ancestor;
+        List<Integer> currShortPath = null;
+
         if (v == null || w == null)
             throw new IllegalArgumentException("Iterable value to SAP.ancestor() can not be null.");
         for (int i : v) {
             for (int j : w) {
-                for (int k : getPath(i, j)) {
-                    currShortPath.add(k);
-                    currentAncestor = ancestor;
-                    if (prevShortPath.size() > currShortPath.size()) {
-                        prevShortPath = currShortPath;
-                        previousAncestor = currentAncestor;
-                        currShortPath = new ArrayList<>();
-                    }
+                currShortPath = getPath(i, j);
+                currentAncestor = ancestor;
+                if (prevShortPath.size() > currShortPath.size()) {
+                    previousAncestor = currentAncestor;
+                    prevShortPath=currShortPath;
                 }
             }
         }
@@ -95,6 +94,12 @@ public class SAP {
 
 
     public List<Integer> getPath(int from, int to) {
+        if (to < 0 || to >= digraph.V())
+            throw new IllegalArgumentException("vertex " + to + " is not between 0 and " + (digraph.V() - 1));
+        if (from < 0 || from >= digraph.V())
+            throw new IllegalArgumentException("vertex " + from + " is not between 0 and " + (digraph.V() - 1));
+        if ((digraph.outdegree(to) == 0 && digraph.indegree(to) == 0) || (digraph.outdegree(from) == 0 &&
+                digraph.indegree(from) == 0)) return null;
 
         List<Integer> sPath = new ArrayList<>();
         if (from == to) {
@@ -107,6 +112,7 @@ public class SAP {
         List<Integer> sources = new ArrayList<>();
         sources.add(from);
         sources.add(to);
+        Collections.sort(sources);
         DeluxBFS dBFS = new DeluxBFS(digraph, sources);
         DeluxBFS fDBS = new DeluxBFS(digraph, from);
         DeluxBFS tDBS = new DeluxBFS(digraph, to);
@@ -138,12 +144,13 @@ public class SAP {
         toQueue.insert(toNode);
         Node minFNode = fromQueue.delMin();
         Node minTNode = toQueue.delMin();
+        Node newNode;
         for (int i : digraph.adj(minTNode.id)) {
-            Node newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
+            newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
             toQueue.insert(newNode);
         }
         for (int i : digraph.adj(minFNode.id)) {
-            Node newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
+            newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
             fromQueue.insert(newNode);
         }
         minFNode = fromQueue.delMin();
@@ -151,7 +158,7 @@ public class SAP {
 
             for (int i : digraph.adj(minFNode.id)) {
                 if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
-                    Node newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
+                    newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
                     fromQueue.insert(newNode);
                 }
             }
@@ -160,7 +167,7 @@ public class SAP {
             if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
             if (minFNode.id == minTNode.id) break;
             for (int i : digraph.adj(minTNode.id)) {
-                Node newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
+                newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
                 toQueue.insert(newNode);
             }
             if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
@@ -187,125 +194,6 @@ public class SAP {
         }
         Collections.sort(sPath);
         return sPath;
-    }
-
-    public Iterable<Integer> shortestPath(int from, int to) {
-
-        List<Integer> sPath = new ArrayList<>();
-        if (from == to) {
-            sPath.add(from);
-            return sPath;
-        }
-        /* Build a min priority queue for to and from based on the node's distance to each node, then use A*:-) to
-         * process nodes */
-
-        List<Integer> sources = new ArrayList<>();
-        sources.add(from);
-        sources.add(to);
-        DeluxBFS dBFS = new DeluxBFS(digraph, sources);
-        DeluxBFS fDBS = new DeluxBFS(digraph, from);
-        DeluxBFS tDBS = new DeluxBFS(digraph, to);
-        MinPQ<Node> fromQueue = new MinPQ<Node>(new Comparator<Node>() {
-            @Override
-            public int compare(Node o1, Node o2) {
-                // number of moves the parent has made plus 1 plus the number moves I have to take from where I am
-                if (o1.prevNode.movesTaken + 1 + tDBS.distTo(o1.id) > o2.prevNode.movesTaken + 1 + tDBS.distTo(o2.id))
-                    return 1;
-                else if (o2.prevNode.movesTaken + 1 + tDBS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + tDBS.distTo(o1.id))
-                    return -1;
-                return 0;
-            }
-        });
-        MinPQ<Node> toQueue = new MinPQ<>(new Comparator<Node>() {
-            @Override
-            public int compare(Node o1, Node o2) {
-                if (o1.prevNode.movesTaken + 1 + fDBS.distTo(o1.id) > o2.prevNode.movesTaken + 1 + fDBS.distTo(o2.id))
-                    return 1;
-                else if (o2.prevNode.movesTaken + 1 + fDBS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + fDBS.distTo(o1.id))
-                    return -1;
-                return 0;
-            }
-        });
-        /* The last value might also be tDBS.distTo(from) todo: check the numbers tomorrow */
-        Node fromNode = new Node(from, null, 0, tDBS.distTo(from));
-        fromQueue.insert(fromNode);
-        Node toNode = new Node(to, null, 0, fDBS.distTo(to));
-        toQueue.insert(toNode);
-        Node minFNode = fromQueue.delMin();
-        Node minTNode = toQueue.delMin();
-        for (int i : digraph.adj(minTNode.id)) {
-            Node newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
-            toQueue.insert(newNode);
-        }
-        for (int i : digraph.adj(minFNode.id)) {
-            Node newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
-            fromQueue.insert(newNode);
-        }
-        minFNode = fromQueue.delMin();
-        while (minFNode.id != minTNode.id) {
-
-            for (int i : digraph.adj(minFNode.id)) {
-                if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
-                    Node newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
-                    fromQueue.insert(newNode);
-                }
-            }
-            if (!fromQueue.isEmpty()) minFNode = fromQueue.delMin();
-            if (minFNode.id == minTNode.id) break;
-            if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
-            if (minFNode.id == minTNode.id) break;
-            for (int i : digraph.adj(minTNode.id)) {
-                Node newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
-                toQueue.insert(newNode);
-            }
-            if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
-            if (minFNode.id == minTNode.id) break;
-        }
-        while (minTNode.prevNode != null && minFNode.prevNode.id == minTNode.prevNode.id) {
-            minFNode = minFNode.prevNode;
-            minTNode = minTNode.prevNode;
-        }
-        ancestor = minFNode.id; // which should be the same as minFNode.id
-        while (true) {
-            if (!sPath.contains(minFNode.id)) {
-                sPath.add(minFNode.id);
-            }
-            if (minFNode.prevNode == null && minTNode.prevNode == null) break;
-            if (minFNode.prevNode != null) minFNode = minFNode.prevNode;
-            /* I can double check here also that I have the shortest path by testing minFNode==minTNode */
-            if (minTNode.prevNode != null) {
-                minTNode = minTNode.prevNode;
-            }
-            if (!sPath.contains(minTNode.id)) {
-                sPath.add(minTNode.id);
-            }
-        }
-        Collections.sort(sPath);
-        return sPath;
-    }
-
-    public Iterable<Integer> shortPath(int from, int to) {
-        List<Integer> thePath = new ArrayList<>();
-        DeluxBFS currentSearch;
-        List<Integer> s;
-        List<Integer> tempPath = new ArrayList<>();
-        for (int i = 0; i < digraph.V(); i++) {
-            s = new ArrayList<>(Arrays.asList(from, to, i));
-            currentSearch = new DeluxBFS(digraph, s);
-            for (int j = 0; j < digraph.V(); j++) {
-                if (currentSearch.hasPathTo(j))
-                    thePath.add(j);
-            }
-            if (!tempPath.isEmpty() && tempPath.size() > thePath.size() && thePath.contains(Arrays.asList(from, to))) {
-                tempPath = thePath;
-
-            } else if (tempPath.isEmpty()) {
-                tempPath = thePath;
-
-            }
-            thePath = new ArrayList<>();
-        }
-        return tempPath;
     }
 
     public static void main(String[] args) {
@@ -315,38 +203,30 @@ public class SAP {
         System.out.println(sap.ancestor(0, 2));
         System.out.println(sap.ancestor(0, 1));
         System.out.println(sap.ancestor(0, 10));
-        digraph = new Digraph(new In(new File("src/main/resources/digraph25.txt")));
-        sap = new SAP(digraph);
-        sap.ancestor(19, 24);
+
         sap.ancestor(1, 2);
-        sap.ancestor(0, 24);*/
-        Digraph digraph = new Digraph(new In(args[0]));
+        sap.ancestor(0, 24);
+        [13, 23, 24] | [6, 16, 17] | [3]
+        */
+        Digraph digraph = new Digraph(new In(new File("src/main/resources/digraph1.txt")));
         SAP sap = new SAP(digraph);
-        System.out.print("Using shortPath() - The path between 4 and 6 should be [0 1 2 4 6] : ");
+        System.out.println("Here is result of 1 and 6: " + sap.ancestor(1, 6));
+        /* Reading in digraph25.txt here */
+        digraph = new Digraph(new In(args[0]));
+        sap = new SAP(digraph);
+        System.out.print("The path between 2 and 0 should be: [ 0 2 ] ");
         System.out.print("[");
-        for (int i : sap.shortestPath(4, 6)) {
+        for (int i : sap.getPath(2, 0)) {
             System.out.print(" " + i + " ");
         }
         System.out.println("]");
         System.out.println();
 
-        System.out.print("Using A* in shortestPath() - The path between 1 and 2 should be [0 1 2] : ");
-        System.out.print("[");
-        for (int i : sap.shortestPath(1, 2)) {
-            System.out.print(" " + i + " ");
-        }
-        System.out.println("]");
-        System.out.println();
-        System.out.print("Using A* in shortestPath() - The path between 1 and 2 should be [0 1 2] : ");
-        System.out.print("[");
-        for (int i : sap.shortestPath(3, 4)) {
-            System.out.print(" " + i + " ");
-        }
-        System.out.println("]");
-        System.out.println();
-
-        sap.shortestPath(1, 2);
-        sap.shortestPath(3, 4);
+        List<Integer> one = new ArrayList<>(Arrays.asList(13, 23, 24));
+        List<Integer> two = new ArrayList<>(Arrays.asList(6, 16, 17));
+        System.out.println("==========================================================================================");
+        System.out.println("The shortest common ancestor in above sets: " + sap.ancestor(one, two));
+        System.out.println("==========================================================================================");
         System.out.print("The path between 1 and 2 should be [0 1 2] ");
         System.out.print("[");
         for (int i : sap.getPath(1, 2)) {
@@ -438,6 +318,7 @@ public class SAP {
         System.out.println("]");
         System.out.println();
 
+
         digraph = new Digraph(new In(new File("src/main/resources/digraph1.txt")));
         sap = new SAP(digraph);
 
@@ -472,10 +353,6 @@ public class SAP {
         System.out.println("]");
         System.out.println();
 
-        digraph = new Digraph(new In(new File("src/main/resources/simplecycle.txt")));
-        sap = new SAP(digraph);
-        System.out.println("Expecting this to be true for simplecycle.txt: " + sap.hasCycle);
-
         System.out.print("The path between 27 and 0 should be: Exception ");
         System.out.print("[");
         try {
@@ -488,5 +365,8 @@ public class SAP {
             throw new IllegalArgumentException(e.getMessage());
         }
 
+        digraph = new Digraph(new In(new File("src/main/resources/simplecycle.txt")));
+        sap = new SAP(digraph);
+        System.out.println("Expecting this to be true for simplecycle.txt: " + sap.hasCycle);
     }
 }
