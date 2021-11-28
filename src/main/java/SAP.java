@@ -23,13 +23,6 @@ public class SAP {
             this.movesTaken = taken;
             this.movesRemaining = remaining;
         }
-
-        private class Ancestor {
-            boolean shortest;
-            List<Integer> ancPath;
-            int ancSource;
-            int ancDest;
-        }
     }
 
     // constructor takes a digraph ( not necessarily a DAG )
@@ -55,8 +48,11 @@ public class SAP {
             throw new IllegalArgumentException("Iterable value to SAP.length() can not be null.");
         List<List<Integer>> paths = new ArrayList<>();
         List<Integer> singlePath = new ArrayList<>();
-        for (int i : v) {
-            for (int j : w) {
+        for (Integer i : v) {
+            if (i == null) throw new IllegalArgumentException("None of the values in subsets to length() can be null.");
+            for (Integer j : w) {
+                if (j == null)
+                    throw new IllegalArgumentException("None of the values in subsets to length() can be null.");
                 if (getPath(i, j) != null) return getPath(i, j).size();
             }
         }
@@ -98,18 +94,16 @@ public class SAP {
             throw new IllegalArgumentException("vertex " + from + " is not between 0 and " + (digraph.V() - 1));
         if ((digraph.outdegree(to) == 0 && digraph.indegree(to) == 0) || (digraph.outdegree(from) == 0 &&
                 digraph.indegree(from) == 0)) return null;
-
         List<Integer> sPath = new ArrayList<>();
         if (from == to) {
             sPath.add(from);
             return sPath;
         }
-        /* Build a min priority queue for to and from based on the node's distance to each node, then use A*:-) to
-         * process nodes */
-
         List<Integer> sources = new ArrayList<>();
         sources.add(from);
         sources.add(to);
+        from = sources.get(0);
+        to = sources.get(1);
         Collections.sort(sources);
         DeluxBFS dBFS = new DeluxBFS(digraph, sources);
         DeluxBFS fDBS = new DeluxBFS(digraph, from);
@@ -135,41 +129,30 @@ public class SAP {
                 return 0;
             }
         });
-        /* The last value might also be tDBS.distTo(from) todo: check the numbers tomorrow */
         Node fromNode = new Node(from, null, 0, tDBS.distTo(from));
         fromQueue.insert(fromNode);
         Node toNode = new Node(to, null, 0, fDBS.distTo(to));
         toQueue.insert(toNode);
         Node minFNode = fromQueue.delMin();
         Node minTNode = toQueue.delMin();
+        if (minFNode.id==minTNode.id) return sources;
         Node newNode;
-        for (int i : digraph.adj(minTNode.id)) {
-            newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
-            toQueue.insert(newNode);
-        }
-        for (int i : digraph.adj(minFNode.id)) {
-            newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
-            fromQueue.insert(newNode);
-        }
-        minFNode = fromQueue.delMin();
+        /* Need to populate fromQueue and toQueue here once b/c grandparent is null, and throws an exception when I check
+        * for A*'s problem below */
         while (minFNode.id != minTNode.id) {
-
+            if (!fromQueue.isEmpty()) minFNode = fromQueue.delMin();
             for (int i : digraph.adj(minFNode.id)) {
                 if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
                     newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
                     fromQueue.insert(newNode);
                 }
             }
-            if (!fromQueue.isEmpty()) minFNode = fromQueue.delMin();
-            if (minFNode.id == minTNode.id) break;
             if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
             if (minFNode.id == minTNode.id) break;
             for (int i : digraph.adj(minTNode.id)) {
                 newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
                 toQueue.insert(newNode);
             }
-            if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
-            if (minFNode.id == minTNode.id) break;
         }
         while (minTNode.prevNode != null && minFNode.prevNode.id == minTNode.prevNode.id) {
             minFNode = minFNode.prevNode;
@@ -206,6 +189,7 @@ public class SAP {
         sap.ancestor(0, 24);
         [13, 23, 24] | [6, 16, 17] | [3]
         */
+
         Digraph digraph = new Digraph(new In(new File("src/main/resources/digraph1.txt")));
         SAP sap = new SAP(digraph);
         System.out.println("Here is result of 1 and 6: " + sap.ancestor(1, 6));
@@ -346,6 +330,15 @@ public class SAP {
         System.out.print("[");
         // test 1 and 2 for ambiguous-ancestor
         for (int i : sap.getPath(0, 2)) {
+            System.out.print(" " + i + " ");
+        }
+        System.out.println("]");
+        System.out.println();
+
+        System.out.print("The shortest path between 9 and 5 - in ambiguous-ancestor is [5, 6, 7, 8, 9]");
+        System.out.print("[");
+        // test 1 and 2 for ambiguous-ancestor
+        for (int i : sap.getPath(9, 5)) {
             System.out.print(" " + i + " ");
         }
         System.out.println("]");

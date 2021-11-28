@@ -29,6 +29,12 @@ class SAPSpecification extends Specification {
         "digraph1.txt"                   | 10   | 4  | [1, 4, 5, 10]
         "digraph1.txt"                   | 3    | 11 | [1, 3, 5, 10, 11]
         "digraph-ambiguous-ancestor.txt" | 1    | 2  | [1, 2]
+        "digraph-ambiguous-ancestor.txt" | 0    | 2  | [0, 1, 2]
+        "digraph-ambiguous-ancestor.txt" | 0    | 3  | [0, 1, 2, 3]
+        "digraph-ambiguous-ancestor.txt" | 9    | 5  | [5, 6, 7, 8, 9]
+        "digraph-ambiguous-ancestor.txt" | 4    | 3  | [2, 3, 4]
+        "digraph-ambiguous-ancestor.txt" | 4    | 3  | [2, 3, 4]
+        "digraph-ambiguous-ancestor.txt" | 8    | 6  | [6, 7, 8]
     }
 
 
@@ -115,11 +121,15 @@ class SAPSpecification extends Specification {
         thrown(IllegalArgumentException)
     }
 
-    def "Should throw exception for graphs with cycles "() {
+    def "ancestor() should throw Illegal Argument Exception if one of the arguments is null or has null in it "() {
         when:
         Digraph digraph = new Digraph(new In("digraph1.txt"))
         SAP sap = new SAP(digraph)
+        //[13, 23, 24] | [6, 16, 17]
+        Iterable<Integer> iter_one = [null, 23, 24]
+        Iterable<Integer> iter_two = [6, 16, 17]
+        sap.length(iter_one, iter_two);
         then:
-        1 == 1 // for now -  fix when you find a file with cycle
+        thrown(IllegalArgumentException)
     }
 }
