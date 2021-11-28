@@ -102,9 +102,10 @@ public class SAP {
         List<Integer> sources = new ArrayList<>();
         sources.add(from);
         sources.add(to);
+        Collections.sort(sources);
         from = sources.get(0);
         to = sources.get(1);
-        Collections.sort(sources);
+
         DeluxBFS dBFS = new DeluxBFS(digraph, sources);
         DeluxBFS fDBS = new DeluxBFS(digraph, from);
         DeluxBFS tDBS = new DeluxBFS(digraph, to);
@@ -135,10 +136,20 @@ public class SAP {
         toQueue.insert(toNode);
         Node minFNode = fromQueue.delMin();
         Node minTNode = toQueue.delMin();
-        if (minFNode.id==minTNode.id) return sources;
+        if (minFNode.id == minTNode.id) return sources;
         Node newNode;
         /* Need to populate fromQueue and toQueue here once b/c grandparent is null, and throws an exception when I check
-        * for A*'s problem below */
+         * for A*'s problem below */
+        for (int i : digraph.adj(minFNode.id)) {
+            newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
+            fromQueue.insert(newNode);
+        }
+        if (!fromQueue.isEmpty()) minFNode = fromQueue.delMin();
+        for (int i : digraph.adj(minTNode.id)) {
+            newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
+            toQueue.insert(newNode);
+        }
+        if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
         while (minFNode.id != minTNode.id) {
             if (!fromQueue.isEmpty()) minFNode = fromQueue.delMin();
             for (int i : digraph.adj(minFNode.id)) {
@@ -154,7 +165,7 @@ public class SAP {
                 toQueue.insert(newNode);
             }
         }
-        while (minTNode.prevNode != null && minFNode.prevNode.id == minTNode.prevNode.id) {
+        while (minFNode.prevNode != null && minTNode.prevNode != null && minFNode.prevNode.id == minTNode.prevNode.id) {
             minFNode = minFNode.prevNode;
             minTNode = minTNode.prevNode;
         }
@@ -335,7 +346,7 @@ public class SAP {
         System.out.println("]");
         System.out.println();
 
-        System.out.print("The shortest path between 9 and 5 - in ambiguous-ancestor is [5, 6, 7, 8, 9]");
+        System.out.print("The shortest path between 9 and 5 - in ambiguous-ancestor is [5, 6, 7, 8, 9]: ");
         System.out.print("[");
         // test 1 and 2 for ambiguous-ancestor
         for (int i : sap.getPath(9, 5)) {
