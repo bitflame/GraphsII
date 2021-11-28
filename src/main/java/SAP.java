@@ -43,7 +43,7 @@ public class SAP {
         this.digraph = digraph;
     }
 
-    // length of shortest ancestral path between v and w; -1 if no such path
+    // length of the shortest ancestral path between v and w; -1 if no such path
     public int length(int v, int w) {
         if (getPath(v, w) != null) return getPath(v, w).size();
         else return -1;
@@ -71,21 +71,19 @@ public class SAP {
 
     // a common ancestor that participates in the shortest ancestral path; -1 if no such path
     public int ancestor(Iterable<Integer> v, Iterable<Integer> w) {
-        // Note - this won't work if the first match is not the shortest path but not other info is in Iterable
+        if (v == null || w == null)
+            throw new IllegalArgumentException("Iterable value to SAP.ancestor() can not be null.");
         int currentAncestor = ancestor, previousAncestor = ancestor;
         List<Integer> prevShortPath = getPath(v.iterator().next(), w.iterator().next());
         previousAncestor = ancestor;
         List<Integer> currShortPath = null;
-
-        if (v == null || w == null)
-            throw new IllegalArgumentException("Iterable value to SAP.ancestor() can not be null.");
         for (int i : v) {
             for (int j : w) {
                 currShortPath = getPath(i, j);
                 currentAncestor = ancestor;
                 if (prevShortPath.size() > currShortPath.size()) {
                     previousAncestor = currentAncestor;
-                    prevShortPath=currShortPath;
+                    prevShortPath = currShortPath;
                 }
             }
         }
