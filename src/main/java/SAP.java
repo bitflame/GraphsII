@@ -12,6 +12,9 @@ public class SAP {
     int ancestor = -1;
     boolean[] marked;
     int[] edgeTo;
+    int from;
+    int to;
+    List<Integer> sPath;
 
     private class Node {
         private final int id;
@@ -65,6 +68,13 @@ public class SAP {
 
     // a common ancestor of v and w that participates in a shortest ancestral path; -1 if no such path
     public int ancestor(int v, int w) {
+        int tempv = v;
+        if (v > w) {
+            v = w;
+            w = tempv;
+        }
+        if (v == from && w == to) return ancestor;
+
         if (getPath(v, w) != null) getPath(v, w);
         return ancestor;
     }
@@ -95,20 +105,18 @@ public class SAP {
             throw new IllegalArgumentException("vertex " + to + " is not between 0 and " + (digraph.V() - 1));
         if (from < 0 || from >= digraph.V())
             throw new IllegalArgumentException("vertex " + from + " is not between 0 and " + (digraph.V() - 1));
+        int tempF = from;
+        if (from > to) {
+            from = to;
+            to = tempF;
+        }
+        if (from == this.from && to == this.to) return sPath;
+        if (from == to) return sPath = new ArrayList<>(from);
         if ((digraph.outdegree(to) == 0 && digraph.indegree(to) == 0) || (digraph.outdegree(from) == 0 &&
                 digraph.indegree(from) == 0)) return null;
-        List<Integer> sPath = new ArrayList<>();
-        if (from == to) {
-            sPath.add(from);
-            return sPath;
-        }
-        List<Integer> sources = new ArrayList<>();
-        sources.add(from);
-        sources.add(to);
-        Collections.sort(sources);
-        from = sources.get(0);
-        to = sources.get(1);
-        DeluxBFS dBFS = new DeluxBFS(digraph, sources);
+        sPath = new ArrayList<>();
+        this.from = from;
+        this.to = to;
         DeluxBFS fDBS = new DeluxBFS(digraph, from);
         DeluxBFS tDBS = new DeluxBFS(digraph, to);
         MinPQ<Node> fromQueue = new MinPQ<Node>(new Comparator<Node>() {
@@ -138,7 +146,6 @@ public class SAP {
         toQueue.insert(toNode);
         Node minFNode = fromQueue.delMin();
         Node minTNode = toQueue.delMin();
-        if (minFNode.id == minTNode.id) return sources;
         Node newNode;
         /* Need to populate fromQueue and toQueue here once b/c grandparent is null, and throws an exception when I check
          * for A*'s problem below . Populate the queues with forward and reverse nodes each time; you can also do this
@@ -147,13 +154,18 @@ public class SAP {
             newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
             fromQueue.insert(newNode);
         }
+
         for (int i : digraph.reverse().adj(minFNode.id)) {
             newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
             fromQueue.insert(newNode);
         }
         if (!fromQueue.isEmpty()) minFNode = fromQueue.delMin();
+        /* set minTNode to a new Node with same id as the minFNode so it will bypass the loop and go straight to calculating
+         * the path and ancestor and etc. */
+        if (minFNode.id == minTNode.id || (tDBS.hasPathTo(minFNode.id)))
+            minTNode = new Node(minFNode.id, minTNode, minTNode.movesTaken + 1, fDBS.distTo(minFNode.id));
 //todo - CycleFinder does not work. I must be using the wrong one. There should be one for Directed Graphs or the issue is something else. Check it later
-        while (minFNode.id != minTNode.id) {
+        while (minFNode.id != minTNode.id && (!tDBS.hasPathTo(minFNode.id))) {
             /* populate ToQueue */
             for (int i : digraph.adj(minTNode.id)) {
                 if (i != to) {
@@ -168,7 +180,7 @@ public class SAP {
                 }
             }
             if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
-            if (minFNode.id == minTNode.id) break;
+            if (minFNode.id == minTNode.id || fDBS.hasPathTo(minTNode.id)) break;
             for (int i : digraph.adj(minFNode.id)) {
                 if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
                     newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
@@ -182,9 +194,9 @@ public class SAP {
                 }
             }
             if (!fromQueue.isEmpty()) minFNode = fromQueue.delMin();
-            if (minFNode.id == minTNode.id) break;
+            if (minFNode.id == minTNode.id || (tDBS.hasPathTo(minFNode.id))) break;
             if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
-            if (minFNode.id == minTNode.id) break;
+            if (minFNode.id == minTNode.id || (fDBS.hasPathTo(minTNode.id))) break;
             for (int i : digraph.adj(minTNode.id)) {
                 if (i != minTNode.prevNode.id) {
                     newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
@@ -204,15 +216,13 @@ public class SAP {
             if (!sPath.contains(minFNode.id)) {
                 sPath.add(minFNode.id);
             }
+            if (!sPath.contains(minTNode.id)){
+                sPath.add(minTNode.id);
+            }
             if (minFNode.prevNode == null && minTNode.prevNode == null) break;
             if (minFNode.prevNode != null) minFNode = minFNode.prevNode;
             /* I can double check here also that I have the shortest path by testing minFNode==minTNode */
-            if (minTNode.prevNode != null) {
-                minTNode = minTNode.prevNode;
-            }
-            if (!sPath.contains(minTNode.id)) {
-                sPath.add(minTNode.id);
-            }
+            if (minTNode.prevNode != null) minTNode = minTNode.prevNode;
         }
         Collections.sort(sPath);
         return sPath;
@@ -243,19 +253,15 @@ public class SAP {
             System.out.print(" " + i + " ");
         }
         System.out.println("]");
+        System.out.println("And the ancestor is : " + sap.ancestor(1, 2));
         System.out.println();
-
-        List<Integer> one = new ArrayList<>(Arrays.asList(13, 23, 24));
-        List<Integer> two = new ArrayList<>(Arrays.asList(6, 16, 17));
-        System.out.println("==========================================================================================");
-        System.out.println("The shortest common ancestor in above sets: " + sap.ancestor(one, two));
-        System.out.println("==========================================================================================");
         System.out.print("The path between 1 and 2 should be [0 1 2] ");
         System.out.print("[");
         for (int i : sap.getPath(1, 2)) {
             System.out.print(" " + i + " ");
         }
         System.out.println("]");
+        System.out.println("And the ancestor is : " + sap.ancestor(1, 2));
         System.out.println();
         System.out.print("The path between 3 and 4 should be [1 3 4] ");
         System.out.print("[");
@@ -263,6 +269,7 @@ public class SAP {
             System.out.print(" " + i + " ");
         }
         System.out.println("]");
+        System.out.println("And the ancestor is : " + sap.ancestor(3, 4));
         System.out.println();
         System.out.print("The path between 4 and 3 should be [1 3 4] ");
         System.out.print("[");
@@ -270,6 +277,7 @@ public class SAP {
             System.out.print(" " + i + " ");
         }
         System.out.println("]");
+        System.out.println("And the ancestor is : " + sap.ancestor(4, 3));
         System.out.println();
         System.out.print("The path between 5 and 6 should be [5 2 6] ");
         System.out.print("[");
@@ -277,13 +285,15 @@ public class SAP {
             System.out.print(" " + i + " ");
         }
         System.out.println("]");
+        System.out.println("And the ancestor is : " + sap.ancestor(5, 6));
         System.out.println();
-        System.out.print("The path between 6 and 5 should be [ 5 2 6] ");
+        System.out.print("The path between 6 and 5 should be [ 2 5  6] ");
         System.out.print("[");
         for (int i : sap.getPath(6, 5)) {
             System.out.print(" " + i + " ");
         }
         System.out.println("]");
+        System.out.println("And the ancestor is : " + sap.ancestor(6, 5));
         System.out.println();
         System.out.print("The path between 4 and 6 should be: [  0 1 2 4 6 ] ");
         System.out.print("[");
@@ -291,6 +301,7 @@ public class SAP {
             System.out.print(" " + i + " ");
         }
         System.out.println("]");
+        System.out.println("And the ancestor is : " + sap.ancestor(4, 6));
         System.out.println();
         System.out.print("The path between 1 and 6 should be: [  0 1 2 6 ] ");
         System.out.print("[");
@@ -298,6 +309,7 @@ public class SAP {
             System.out.print(" " + i + " ");
         }
         System.out.println("]");
+        System.out.println("And the ancestor is : " + sap.ancestor(1, 6));
         System.out.println();
         System.out.print("The path between 17 and 24 should be: [  5 10 12 17 20 24 ] ");
         System.out.print("[");
@@ -305,8 +317,7 @@ public class SAP {
             System.out.print(" " + i + " ");
         }
         System.out.println("]");
-        System.out.println();
-
+        System.out.println("And the ancestor is : " + sap.ancestor(17, 24));
         System.out.println();
         System.out.print("The path between 23 and 24 should be: [ 24 23 20 ] ");
         System.out.print("[");
@@ -315,36 +326,39 @@ public class SAP {
         }
         System.out.println("]");
         System.out.println();
-
-
+        System.out.println("And the ancestor is : " + sap.ancestor(23, 24));
+        System.out.println();
         System.out.print("The path between 11 and 4 should be: [  11 5 4 2 1 0 ] ");
         System.out.print("[");
         for (int i : sap.getPath(11, 4)) {
             System.out.print(" " + i + " ");
         }
         System.out.println("]");
+        System.out.println("And the ancestor is : " + sap.ancestor(11, 4));
         System.out.println();
-
         System.out.print("The path between 17 and 19 should be: [ 17 5 10 12 19 ] ");
         System.out.print("[");
         for (int i : sap.getPath(17, 19)) {
             System.out.print(" " + i + " ");
         }
         System.out.println("]");
+        System.out.println("And the ancestor is : " + sap.ancestor(17, 19));
         System.out.println();
-
         System.out.print("The path between 17 and 17 should be: [ 17 ] ");
         System.out.print("[");
         for (int i : sap.getPath(17, 17)) {
             System.out.print(" " + i + " ");
         }
         System.out.println("]");
+        System.out.println("And the ancestor is : " + sap.ancestor(17, 17));
         System.out.println();
-
-
+        List<Integer> one = new ArrayList<>(Arrays.asList(13, 23, 24));
+        List<Integer> two = new ArrayList<>(Arrays.asList(6, 16, 17));
+        System.out.println("==========================================================================================");
+        System.out.println("The shortest common ancestor in above sets: " + sap.ancestor(one, two));
+        System.out.println("==========================================================================================");
         digraph = new Digraph(new In(new File("src/main/resources/digraph1.txt")));
         sap = new SAP(digraph);
-
         System.out.print("The path between 10 and 4 should be: [ 4 1 5 10 ] ");
         System.out.print("[");
         for (int i : sap.getPath(4, 10)) {
@@ -352,8 +366,6 @@ public class SAP {
         }
         System.out.println("]");
         System.out.println();
-
-
         System.out.println("ancestor should return 1 for values 3 and 11: " + sap.ancestor(3, 11));
 /********************************* Ambiguous tests **********************************************************/
         digraph = new Digraph(new In(new File("src/main/resources/digraph-ambiguous-ancestor.txt")));
@@ -366,7 +378,6 @@ public class SAP {
         }
         System.out.println("]");
         System.out.println();
-
         System.out.print("The shortest path between 0 and 2 - in ambiguous-ancestor is [0 1 2]");
         System.out.print("[");
         // test 1 and 2 for ambiguous-ancestor
@@ -375,7 +386,6 @@ public class SAP {
         }
         System.out.println("]");
         System.out.println();
-
         System.out.print("The shortest path between 9 and 5 - in ambiguous-ancestor is [5, 6, 7, 8, 9]: ");
         System.out.print("[");
         // test 1 and 2 for ambiguous-ancestor
@@ -384,7 +394,6 @@ public class SAP {
         }
         System.out.println("]");
         System.out.println();
-
         System.out.print("The path between 27 and 0 should be: Exception ");
         System.out.print("[");
         try {
@@ -396,7 +405,6 @@ public class SAP {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException(e.getMessage());
         }
-
         digraph = new Digraph(new In(new File("src/main/resources/simplecycle.txt")));
         sap = new SAP(digraph);
         System.out.println("Expecting this to be true for simplecycle.txt: " + sap.hasCycle);
