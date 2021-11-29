@@ -7,9 +7,11 @@ import java.io.File;
 import java.util.*;
 
 public class SAP {
-    boolean hasCycle;
+    boolean hasCycle = false;
     private Digraph digraph;
     int ancestor = -1;
+    boolean[] marked;
+    int[] edgeTo;
 
     private class Node {
         private final int id;
@@ -29,6 +31,8 @@ public class SAP {
     public SAP(Digraph digraph) {
         if (digraph == null) throw new IllegalArgumentException("Digraph value can not be null");
         DirectedCycle cycleFinder = new DirectedCycle(digraph);
+        marked = new boolean[digraph.V()];
+        edgeTo = new int[digraph.V()];
         if (cycleFinder.hasCycle()) {
             hasCycle = true;
             return;
@@ -105,7 +109,8 @@ public class SAP {
         Collections.sort(sources);
         from = sources.get(0);
         to = sources.get(1);
-
+        marked[from] = true;
+        marked[to] = true;
         DeluxBFS dBFS = new DeluxBFS(digraph, sources);
         DeluxBFS fDBS = new DeluxBFS(digraph, from);
         DeluxBFS tDBS = new DeluxBFS(digraph, to);
@@ -139,37 +144,101 @@ public class SAP {
         if (minFNode.id == minTNode.id) return sources;
         Node newNode;
         /* Need to populate fromQueue and toQueue here once b/c grandparent is null, and throws an exception when I check
-         * for A*'s problem below */
+         * for A*'s problem below . Populate the queues with forward and reverse nodes each time; you can also do this
+         * only when there is a cycle */
         for (int i : digraph.adj(minFNode.id)) {
-            newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
-            fromQueue.insert(newNode);
+            if (i != from) {
+                edgeTo[i] = minFNode.id;
+                marked[i] = true;
+                newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
+                fromQueue.insert(newNode);
+            }
         }
-        if (!fromQueue.isEmpty()) minFNode = fromQueue.delMin();
-        for (int i : digraph.adj(minTNode.id)) {
-            newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
-            toQueue.insert(newNode);
-        }
-        if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
-        while (minFNode.id != minTNode.id) {
-            if (!fromQueue.isEmpty()) minFNode = fromQueue.delMin();
-            for (int i : digraph.adj(minFNode.id)) {
-                if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
+        if (digraph.outdegree(minFNode.id) == 0) {
+            while (marked[minFNode.id] && minFNode.prevNode != null) minFNode = minFNode.prevNode;
+            for (int i : digraph.reverse().adj(minFNode.id)) {
+                if (i != from && !marked[i]) {
+                    marked[i] = true;
+                    edgeTo[i] = minFNode.id;
                     newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
                     fromQueue.insert(newNode);
                 }
             }
-            if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
-            if (minFNode.id == minTNode.id) break;
-            for (int i : digraph.adj(minTNode.id)) {
+        }
+        if (!fromQueue.isEmpty()) minFNode = fromQueue.delMin();
+        for (int i : digraph.adj(minTNode.id)) {
+            if (i != to) {
+                marked[i] = true;
+                edgeTo[i] = minTNode.id;
                 newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
                 toQueue.insert(newNode);
             }
         }
-        while (minFNode.prevNode != null && minTNode.prevNode != null && minFNode.prevNode.id == minTNode.prevNode.id) {
-            minFNode = minFNode.prevNode;
-            minTNode = minTNode.prevNode;
+        if (digraph.outdegree(minTNode.id) == 0) {
+            while (marked[minTNode.id] && minTNode.prevNode != null) minTNode = minTNode.prevNode;
+            for (int i : digraph.reverse().adj(minTNode.id)) {
+                if (i != to) {
+                    marked[i] = true;
+                    edgeTo[i] = minTNode.id;
+                    newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
+                    toQueue.insert(newNode);
+                }
+            }
         }
-        ancestor = minFNode.id; // which should be the same as minFNode.id
+//todo - CycleFinder does not work. I must be using the wrong one. There should be one for Directed Graphs or the issue is something else. Check it later
+        if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
+        while (!marked[minFNode.id] && !marked[minTNode.id]) {
+            /* If minFNode or minTNode don't have adjacency, then find a node that has adjacency with them, and is not explored */
+            if (digraph.outdegree(minFNode.id) == 0) {
+                while (marked[minFNode.id] && minFNode.prevNode != null) minFNode = minFNode.prevNode;
+                for (int i : digraph.reverse().adj(minFNode.id)) {
+                    if (i != minFNode.prevNode.id) {
+                        marked[i] = true;
+                        edgeTo[i] = minFNode.id;
+                        newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
+                        fromQueue.insert(newNode);
+                    }
+                }
+            }
+            for (int i : digraph.adj(minFNode.id)) {
+                if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
+                    marked[i] = true;
+                    edgeTo[i] = minFNode.id;
+                    newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
+                    fromQueue.insert(newNode);
+                }
+            }
+            if (!fromQueue.isEmpty()) minFNode = fromQueue.delMin();
+            if (marked[minFNode.id]) break;
+            if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
+            if (marked[minTNode.id]) break;
+            for (int i : digraph.adj(minTNode.id)) {
+                marked[i] = true;
+                edgeTo[i] = minTNode.id;
+                newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
+                toQueue.insert(newNode);
+            }
+            if (digraph.outdegree(minTNode.id) == 0) {
+                while (marked[minTNode.id] && minFNode.prevNode != null) minTNode = minTNode.prevNode;
+                if (minTNode.id == to) break;
+                for (int i : digraph.reverse().adj(minTNode.id)) {
+                    marked[i] = true;
+                    edgeTo[i] = minTNode.id;
+                    newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
+                    toQueue.insert(newNode);
+                }
+            }
+        }
+        Node theNode = null;
+        if (marked[minFNode.id]) {
+            theNode = minFNode;
+        } else if (marked[minTNode.id]) {
+            theNode = minTNode;
+        }
+        ancestor = theNode.id; // which should be the same as minFNode.id
+        while (theNode.prevNode != null) {
+            theNode = toNode.prevNode;
+        }
         while (true) {
             if (!sPath.contains(minFNode.id)) {
                 sPath.add(minFNode.id);
@@ -199,14 +268,14 @@ public class SAP {
         sap.ancestor(1, 2);
         sap.ancestor(0, 24);
         [13, 23, 24] | [6, 16, 17] | [3]
-        */
 
-        Digraph digraph = new Digraph(new In(new File("src/main/resources/digraph1.txt")));
-        SAP sap = new SAP(digraph);
-        System.out.println("Here is result of 1 and 6: " + sap.ancestor(1, 6));
-        /* Reading in digraph25.txt here */
-        digraph = new Digraph(new In(args[0]));
+
+        digraph = new Digraph(new In(new File("src/main/resources/digraph1.txt")));
         sap = new SAP(digraph);
+        System.out.println("Here is result of 1 and 6: " + sap.ancestor(1, 6));*/
+        /* Reading in digraph25.txt here */
+        Digraph digraph = new Digraph(new In(args[0]));
+        SAP sap = new SAP(digraph);
         System.out.print("The path between 2 and 0 should be: [ 0 2 ] ");
         System.out.print("[");
         for (int i : sap.getPath(2, 0)) {
@@ -325,7 +394,7 @@ public class SAP {
 
 
         System.out.println("ancestor should return 1 for values 3 and 11: " + sap.ancestor(3, 11));
-
+/********************************* Ambiguous tests **********************************************************/
         digraph = new Digraph(new In(new File("src/main/resources/digraph-ambiguous-ancestor.txt")));
         sap = new SAP(digraph);
         System.out.print("The shortest path between 1 and 2 - in ambiguous-ancestor is [1 2]");
