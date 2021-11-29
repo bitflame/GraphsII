@@ -90,7 +90,6 @@ public class SAP {
         return previousAncestor;
     }
 
-
     public List<Integer> getPath(int from, int to) {
         if (to < 0 || to >= digraph.V())
             throw new IllegalArgumentException("vertex " + to + " is not between 0 and " + (digraph.V() - 1));
@@ -109,8 +108,6 @@ public class SAP {
         Collections.sort(sources);
         from = sources.get(0);
         to = sources.get(1);
-        marked[from] = true;
-        marked[to] = true;
         DeluxBFS dBFS = new DeluxBFS(digraph, sources);
         DeluxBFS fDBS = new DeluxBFS(digraph, from);
         DeluxBFS tDBS = new DeluxBFS(digraph, to);
@@ -119,9 +116,9 @@ public class SAP {
             public int compare(Node o1, Node o2) {
                 // number of moves the parent has made plus 1 plus the number moves I have to take from where I am
                 if (o1.prevNode.movesTaken + 1 + tDBS.distTo(o1.id) > o2.prevNode.movesTaken + 1 + tDBS.distTo(o2.id))
-                    return 1;
-                else if (o2.prevNode.movesTaken + 1 + tDBS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + tDBS.distTo(o1.id))
                     return -1;
+                else if (o2.prevNode.movesTaken + 1 + tDBS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + tDBS.distTo(o1.id))
+                    return 1;
                 return 0;
             }
         });
@@ -129,9 +126,9 @@ public class SAP {
             @Override
             public int compare(Node o1, Node o2) {
                 if (o1.prevNode.movesTaken + 1 + fDBS.distTo(o1.id) > o2.prevNode.movesTaken + 1 + fDBS.distTo(o2.id))
-                    return 1;
-                else if (o2.prevNode.movesTaken + 1 + fDBS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + fDBS.distTo(o1.id))
                     return -1;
+                else if (o2.prevNode.movesTaken + 1 + fDBS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + fDBS.distTo(o1.id))
+                    return 1;
                 return 0;
             }
         });
@@ -147,98 +144,62 @@ public class SAP {
          * for A*'s problem below . Populate the queues with forward and reverse nodes each time; you can also do this
          * only when there is a cycle */
         for (int i : digraph.adj(minFNode.id)) {
-            if (i != from) {
-                edgeTo[i] = minFNode.id;
-                marked[i] = true;
-                newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
-                fromQueue.insert(newNode);
-            }
+            newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
+            fromQueue.insert(newNode);
         }
-        if (digraph.outdegree(minFNode.id) == 0) {
-            while (marked[minFNode.id] && minFNode.prevNode != null) minFNode = minFNode.prevNode;
-            for (int i : digraph.reverse().adj(minFNode.id)) {
-                if (i != from && !marked[i]) {
-                    marked[i] = true;
-                    edgeTo[i] = minFNode.id;
-                    newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
-                    fromQueue.insert(newNode);
-                }
-            }
+        for (int i : digraph.reverse().adj(minFNode.id)) {
+            newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
+            fromQueue.insert(newNode);
         }
         if (!fromQueue.isEmpty()) minFNode = fromQueue.delMin();
-        for (int i : digraph.adj(minTNode.id)) {
-            if (i != to) {
-                marked[i] = true;
-                edgeTo[i] = minTNode.id;
-                newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
-                toQueue.insert(newNode);
-            }
-        }
-        if (digraph.outdegree(minTNode.id) == 0) {
-            while (marked[minTNode.id] && minTNode.prevNode != null) minTNode = minTNode.prevNode;
-            for (int i : digraph.reverse().adj(minTNode.id)) {
+//todo - CycleFinder does not work. I must be using the wrong one. There should be one for Directed Graphs or the issue is something else. Check it later
+        while (minFNode.id != minTNode.id) {
+            /* populate ToQueue */
+            for (int i : digraph.adj(minTNode.id)) {
                 if (i != to) {
-                    marked[i] = true;
-                    edgeTo[i] = minTNode.id;
                     newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
                     toQueue.insert(newNode);
                 }
             }
-        }
-//todo - CycleFinder does not work. I must be using the wrong one. There should be one for Directed Graphs or the issue is something else. Check it later
-        if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
-        while (!marked[minFNode.id] && !marked[minTNode.id]) {
-            /* If minFNode or minTNode don't have adjacency, then find a node that has adjacency with them, and is not explored */
-            if (digraph.outdegree(minFNode.id) == 0) {
-                while (marked[minFNode.id] && minFNode.prevNode != null) minFNode = minFNode.prevNode;
-                for (int i : digraph.reverse().adj(minFNode.id)) {
-                    if (i != minFNode.prevNode.id) {
-                        marked[i] = true;
-                        edgeTo[i] = minFNode.id;
-                        newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
-                        fromQueue.insert(newNode);
-                    }
+            for (int i : digraph.reverse().adj(minTNode.id)) {
+                if (i != to) {
+                    newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
+                    toQueue.insert(newNode);
                 }
             }
+            if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
+            if (minFNode.id == minTNode.id) break;
             for (int i : digraph.adj(minFNode.id)) {
                 if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
-                    marked[i] = true;
-                    edgeTo[i] = minFNode.id;
+                    newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
+                    fromQueue.insert(newNode);
+                }
+            }
+            for (int i : digraph.reverse().adj(minFNode.id)) {
+                if (i != minFNode.prevNode.id) {
                     newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
                     fromQueue.insert(newNode);
                 }
             }
             if (!fromQueue.isEmpty()) minFNode = fromQueue.delMin();
-            if (marked[minFNode.id]) break;
+            if (minFNode.id == minTNode.id) break;
             if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
-            if (marked[minTNode.id]) break;
+            if (minFNode.id == minTNode.id) break;
             for (int i : digraph.adj(minTNode.id)) {
-                marked[i] = true;
-                edgeTo[i] = minTNode.id;
-                newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
-                toQueue.insert(newNode);
-            }
-            if (digraph.outdegree(minTNode.id) == 0) {
-                while (marked[minTNode.id] && minFNode.prevNode != null) minTNode = minTNode.prevNode;
-                if (minTNode.id == to) break;
-                for (int i : digraph.reverse().adj(minTNode.id)) {
-                    marked[i] = true;
-                    edgeTo[i] = minTNode.id;
+                if (i != minTNode.prevNode.id) {
                     newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
                     toQueue.insert(newNode);
                 }
             }
+            for (int i : digraph.reverse().adj(minTNode.id)) {
+                if (i != minTNode.id) {
+                    newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
+                    toQueue.insert(newNode);
+                }
+
+            }
         }
-        Node theNode = null;
-        if (marked[minFNode.id]) {
-            theNode = minFNode;
-        } else if (marked[minTNode.id]) {
-            theNode = minTNode;
-        }
-        ancestor = theNode.id; // which should be the same as minFNode.id
-        while (theNode.prevNode != null) {
-            theNode = toNode.prevNode;
-        }
+        ancestor = minFNode.id; // which should be the same as minFNode.id
         while (true) {
             if (!sPath.contains(minFNode.id)) {
                 sPath.add(minFNode.id);

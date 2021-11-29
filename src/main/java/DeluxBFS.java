@@ -78,7 +78,6 @@ public class DeluxBFS {
             System.out.print(" " + i);
         }*/
     }
-
     public boolean hasPathTo(int v) {
         validateVertex(v);
         return marked[v];
