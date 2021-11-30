@@ -68,13 +68,7 @@ public class SAP {
 
     // a common ancestor of v and w that participates in a shortest ancestral path; -1 if no such path
     public int ancestor(int v, int w) {
-        int tempv = v;
-        if (v > w) {
-            v = w;
-            w = tempv;
-        }
-        if (v == from && w == to) return ancestor;
-
+        if ((v == from || v == to) && (w == from || w == to)) return ancestor;
         if (getPath(v, w) != null) getPath(v, w);
         return ancestor;
     }
@@ -105,12 +99,7 @@ public class SAP {
             throw new IllegalArgumentException("vertex " + to + " is not between 0 and " + (digraph.V() - 1));
         if (from < 0 || from >= digraph.V())
             throw new IllegalArgumentException("vertex " + from + " is not between 0 and " + (digraph.V() - 1));
-        int tempF = from;
-        if (from > to) {
-            from = to;
-            to = tempF;
-        }
-        if (from == this.from && to == this.to) return sPath;
+        if ((from == this.from || from == this.to) && (to == this.to || to == this.from)) return shortPath;
         if (from == to) return shortPath = new ArrayList<>(from);
         if ((digraph.outdegree(to) == 0 && digraph.indegree(to) == 0) || (digraph.outdegree(from) == 0 &&
                 digraph.indegree(from) == 0)) return null;
@@ -145,40 +134,48 @@ public class SAP {
         Node toNode = new Node(to, null, 0, fDBS.distTo(to));
         toQueue.insert(toNode);
         Node minFNode = fromQueue.delMin();
-        sPath.push(from);
-        onStack[from] = true;
         Node minTNode = toQueue.delMin();
-        sPath.push(to);
-        onStack[to] = true;
+        sPath.push(minTNode.id);
+        onStack[minTNode.id] = true;
         Node newNode;
         /* Need to populate fromQueue and toQueue here once b/c grandparent is null, and throws an exception when I check
          * for A*'s problem below . Populate the queues with forward and reverse nodes each time; you can also do this
          * only when there is a cycle */
         for (int i : digraph.adj(minFNode.id)) {
-            sPath.push(i);
-            onStack[i] = true;
             newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
             fromQueue.insert(newNode);
         }
-        if (!fromQueue.isEmpty()) minFNode = fromQueue.delMin();
+        if (!fromQueue.isEmpty()) {
+            minFNode = fromQueue.delMin();
+            if (onStack[minFNode.id]) {
+                shortPath = extractPath(minFNode, minTNode, minFNode.id);
+                Collections.sort(shortPath);
+                return shortPath;
+            }
+            sPath.push(minFNode.id);
+            onStack[minFNode.id] = true;
+        }
+
         /* populate ToQueue */
         for (int i : digraph.adj(minTNode.id)) {
             if (i != to) {
                 // I really do not see I should pass both nodes
                 if (onStack[i]) {
-                     shortPath = extractPath(minFNode, minTNode, minTNode.id);
-                     Collections.sort(shortPath);
-                     return shortPath;
+                    shortPath = extractPath(minFNode, minTNode, minFNode.id);
+                    Collections.sort(shortPath);
+                    return shortPath;
                 }
-                onStack[i] = true;
-                sPath.push(i);
                 newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
                 toQueue.insert(newNode);
             }
         }
 //todo - CycleFinder does not work. I must be using the wrong one. There should be one for Directed Graphs or the issue is something else. Check it later
         while (minFNode.id != minTNode.id) {
-            if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
+            if (!toQueue.isEmpty()) {
+                minTNode = toQueue.delMin();
+                sPath.push(minTNode.id);
+                onStack[minTNode.id] = true;
+            }
             if (minFNode.id == minTNode.id) {
                 Collections.sort(shortPath);
                 return shortPath;
@@ -186,12 +183,10 @@ public class SAP {
             for (int i : digraph.adj(minFNode.id)) {
                 if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
                     if (onStack[i]) {
-                        shortPath = extractPath(minFNode, minTNode, minFNode.id);
+                        shortPath = extractPath(minFNode, minTNode, i);
                         Collections.sort(shortPath);
                         return shortPath;
                     }
-                    onStack[i] = true;
-                    sPath.push(i);
                     newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
                     fromQueue.insert(newNode);
                 }
@@ -199,27 +194,34 @@ public class SAP {
             /* If I put the ids that I remove from MinPQs on to a stack, and keep an array called onStack, I can always
             check and if a value is already on the stack, I can break and pop the stack until I get to it and not have
             to role back and etc*/
-            if (!fromQueue.isEmpty()) minFNode = fromQueue.delMin();
+            if (!fromQueue.isEmpty()) {
+                minFNode = fromQueue.delMin();
+                sPath.push(minFNode.id);
+                onStack[minFNode.id] = true;
+            }
+
             if (minFNode.id == minTNode.id) {
-                shortPath=extractPath(minFNode,minTNode,minTNode.id);
+                shortPath = extractPath(minFNode, minTNode, minTNode.id);
                 Collections.sort(shortPath);
                 break;
             }
-            if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
+            if (!toQueue.isEmpty()) {
+                minTNode = toQueue.delMin();
+                sPath.push(minTNode.id);
+                onStack[minTNode.id] = true;
+            }
             if (minFNode.id == minTNode.id) {
-                shortPath=extractPath(minFNode,minTNode,minTNode.id);
+                shortPath = extractPath(minFNode, minTNode, minTNode.id);
                 Collections.sort(shortPath);
                 break;
             }
             for (int i : digraph.adj(minTNode.id)) {
                 if (i != minTNode.prevNode.id) {
                     if (onStack[i]) {
-                        shortPath = extractPath(minFNode, minTNode, minTNode.id);
+                        shortPath = extractPath(minFNode, minTNode, i);
                         Collections.sort(shortPath);
                         return shortPath;
                     }
-                    onStack[i] = true;
-                    sPath.push(i);
                     newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
                     toQueue.insert(newNode);
                 }
@@ -230,12 +232,12 @@ public class SAP {
 
     private List<Integer> extractPath(Node minF, Node minT, int match) {
         List<Integer> path = new ArrayList<>();
-        while (sPath.peek() != match) sPath.pop();
+        while (sPath.peek() != match && sPath.peek() != minF.id && sPath.peek() != minT.id) sPath.pop();
         ancestor = match; // ancestor should be the first match
         while (!sPath.isEmpty()) {
             path.add(sPath.pop());
         }
-        while (minF.prevNode != null) {
+        while (minF != null && minF.prevNode != null) {
             if (!path.contains(minF.id)) {
                 path.add(minF.id);
             }
@@ -275,10 +277,11 @@ public class SAP {
             System.out.print(" " + i + " ");
         }
         System.out.println("]");
-        System.out.println("And the ancestor is : " + sap.ancestor(1, 2));
+        System.out.println("And the ancestor is : " + sap.ancestor(2, 0));
         System.out.println();
         System.out.print("The path between 1 and 2 should be [0 1 2] ");
         System.out.print("[");
+        sap = new SAP(digraph);
         for (int i : sap.getPath(1, 2)) {
             System.out.print(" " + i + " ");
         }
@@ -287,6 +290,7 @@ public class SAP {
         System.out.println();
         System.out.print("The path between 3 and 4 should be [1 3 4] ");
         System.out.print("[");
+        sap = new SAP(digraph);
         for (int i : sap.getPath(3, 4)) {
             System.out.print(" " + i + " ");
         }
@@ -295,6 +299,7 @@ public class SAP {
         System.out.println();
         System.out.print("The path between 4 and 3 should be [1 3 4] ");
         System.out.print("[");
+        sap = new SAP(digraph);
         for (int i : sap.getPath(4, 3)) {
             System.out.print(" " + i + " ");
         }
@@ -303,6 +308,7 @@ public class SAP {
         System.out.println();
         System.out.print("The path between 5 and 6 should be [5 2 6] ");
         System.out.print("[");
+        sap = new SAP(digraph);
         for (int i : sap.getPath(5, 6)) {
             System.out.print(" " + i + " ");
         }
@@ -311,6 +317,7 @@ public class SAP {
         System.out.println();
         System.out.print("The path between 6 and 5 should be [ 2 5  6] ");
         System.out.print("[");
+        sap = new SAP(digraph);
         for (int i : sap.getPath(6, 5)) {
             System.out.print(" " + i + " ");
         }
@@ -319,6 +326,7 @@ public class SAP {
         System.out.println();
         System.out.print("The path between 4 and 6 should be: [  0 1 2 4 6 ] ");
         System.out.print("[");
+        sap = new SAP(digraph);
         for (int i : sap.getPath(4, 6)) {
             System.out.print(" " + i + " ");
         }
