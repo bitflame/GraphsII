@@ -34,6 +34,7 @@ public class SAP {
     public SAP(Digraph digraph) {
         if (digraph == null) throw new IllegalArgumentException("Digraph value can not be null");
         DirectedCycle cycleFinder = new DirectedCycle(digraph);
+        sPath = new Stack<>();
         onStack = new boolean[digraph.V()];
         if (cycleFinder.hasCycle()) {
             hasCycle = true;
@@ -164,7 +165,11 @@ public class SAP {
         for (int i : digraph.adj(minTNode.id)) {
             if (i != to) {
                 // I really do not see I should pass both nodes
-                if (onStack[i]) shortPath = extractPath(minFNode, minTNode, i);
+                if (onStack[i]) {
+                     shortPath = extractPath(minFNode, minTNode, minTNode.id);
+                     Collections.sort(shortPath);
+                     return shortPath;
+                }
                 onStack[i] = true;
                 sPath.push(i);
                 newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
@@ -174,10 +179,17 @@ public class SAP {
 //todo - CycleFinder does not work. I must be using the wrong one. There should be one for Directed Graphs or the issue is something else. Check it later
         while (minFNode.id != minTNode.id) {
             if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
-            if (minFNode.id == minTNode.id) break;
+            if (minFNode.id == minTNode.id) {
+                Collections.sort(shortPath);
+                return shortPath;
+            }
             for (int i : digraph.adj(minFNode.id)) {
                 if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
-                    if (onStack[i]) shortPath = extractPath(minFNode, minTNode, i);
+                    if (onStack[i]) {
+                        shortPath = extractPath(minFNode, minTNode, minFNode.id);
+                        Collections.sort(shortPath);
+                        return shortPath;
+                    }
                     onStack[i] = true;
                     sPath.push(i);
                     newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
@@ -188,12 +200,24 @@ public class SAP {
             check and if a value is already on the stack, I can break and pop the stack until I get to it and not have
             to role back and etc*/
             if (!fromQueue.isEmpty()) minFNode = fromQueue.delMin();
-            if (minFNode.id == minTNode.id) break;
+            if (minFNode.id == minTNode.id) {
+                shortPath=extractPath(minFNode,minTNode,minTNode.id);
+                Collections.sort(shortPath);
+                break;
+            }
             if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
-            if (minFNode.id == minTNode.id) break;
+            if (minFNode.id == minTNode.id) {
+                shortPath=extractPath(minFNode,minTNode,minTNode.id);
+                Collections.sort(shortPath);
+                break;
+            }
             for (int i : digraph.adj(minTNode.id)) {
                 if (i != minTNode.prevNode.id) {
-                    if (onStack[i]) shortPath = extractPath(minFNode, minTNode, i);
+                    if (onStack[i]) {
+                        shortPath = extractPath(minFNode, minTNode, minTNode.id);
+                        Collections.sort(shortPath);
+                        return shortPath;
+                    }
                     onStack[i] = true;
                     sPath.push(i);
                     newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
@@ -201,7 +225,6 @@ public class SAP {
                 }
             }
         }
-        // I still need to rewrite the code for when minFNode.id  = minTNode.id here
         return shortPath;
     }
 
