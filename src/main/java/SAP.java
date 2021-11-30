@@ -10,11 +10,11 @@ public class SAP {
     boolean hasCycle = false;
     private Digraph digraph;
     int ancestor = -1;
-    boolean[] marked;
-    int[] edgeTo;
     int from;
     int to;
-    List<Integer> sPath;
+    Stack<Integer> sPath;
+    List<Integer> shortPath;
+    boolean[] onStack;
 
     private class Node {
         private final int id;
@@ -34,8 +34,7 @@ public class SAP {
     public SAP(Digraph digraph) {
         if (digraph == null) throw new IllegalArgumentException("Digraph value can not be null");
         DirectedCycle cycleFinder = new DirectedCycle(digraph);
-        marked = new boolean[digraph.V()];
-        edgeTo = new int[digraph.V()];
+        onStack = new boolean[digraph.V()];
         if (cycleFinder.hasCycle()) {
             hasCycle = true;
             return;
@@ -111,10 +110,10 @@ public class SAP {
             to = tempF;
         }
         if (from == this.from && to == this.to) return sPath;
-        if (from == to) return sPath = new ArrayList<>(from);
+        if (from == to) return shortPath = new ArrayList<>(from);
         if ((digraph.outdegree(to) == 0 && digraph.indegree(to) == 0) || (digraph.outdegree(from) == 0 &&
                 digraph.indegree(from) == 0)) return null;
-        sPath = new ArrayList<>();
+        shortPath = new ArrayList<>();
         this.from = from;
         this.to = to;
         DeluxBFS fDBS = new DeluxBFS(digraph, from);
@@ -145,87 +144,87 @@ public class SAP {
         Node toNode = new Node(to, null, 0, fDBS.distTo(to));
         toQueue.insert(toNode);
         Node minFNode = fromQueue.delMin();
+        sPath.push(from);
+        onStack[from] = true;
         Node minTNode = toQueue.delMin();
+        sPath.push(to);
+        onStack[to] = true;
         Node newNode;
         /* Need to populate fromQueue and toQueue here once b/c grandparent is null, and throws an exception when I check
          * for A*'s problem below . Populate the queues with forward and reverse nodes each time; you can also do this
          * only when there is a cycle */
         for (int i : digraph.adj(minFNode.id)) {
-            newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
-            fromQueue.insert(newNode);
-        }
-
-        for (int i : digraph.reverse().adj(minFNode.id)) {
+            sPath.push(i);
+            onStack[i] = true;
             newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
             fromQueue.insert(newNode);
         }
         if (!fromQueue.isEmpty()) minFNode = fromQueue.delMin();
-        /* set minTNode to a new Node with same id as the minFNode so it will bypass the loop and go straight to calculating
-         * the path and ancestor and etc. */
-        if (minFNode.id == minTNode.id || (tDBS.hasPathTo(minFNode.id)))
-            minTNode = new Node(minFNode.id, minTNode, minTNode.movesTaken + 1, fDBS.distTo(minFNode.id));
+        /* populate ToQueue */
+        for (int i : digraph.adj(minTNode.id)) {
+            if (i != to) {
+                // I really do not see I should pass both nodes
+                if (onStack[i]) shortPath = extractPath(minFNode, minTNode, i);
+                onStack[i] = true;
+                sPath.push(i);
+                newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
+                toQueue.insert(newNode);
+            }
+        }
 //todo - CycleFinder does not work. I must be using the wrong one. There should be one for Directed Graphs or the issue is something else. Check it later
-        while (minFNode.id != minTNode.id && (!tDBS.hasPathTo(minFNode.id))) {
-            /* populate ToQueue */
-            for (int i : digraph.adj(minTNode.id)) {
-                if (i != to) {
-                    newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
-                    toQueue.insert(newNode);
-                }
-            }
-            for (int i : digraph.reverse().adj(minTNode.id)) {
-                if (i != to) {
-                    newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
-                    toQueue.insert(newNode);
-                }
-            }
+        while (minFNode.id != minTNode.id) {
             if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
-            if (minFNode.id == minTNode.id || fDBS.hasPathTo(minTNode.id)) break;
+            if (minFNode.id == minTNode.id) break;
             for (int i : digraph.adj(minFNode.id)) {
                 if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
+                    if (onStack[i]) shortPath = extractPath(minFNode, minTNode, i);
+                    onStack[i] = true;
+                    sPath.push(i);
                     newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
                     fromQueue.insert(newNode);
                 }
             }
-            for (int i : digraph.reverse().adj(minFNode.id)) {
-                if (i != minFNode.prevNode.id) {
-                    newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
-                    fromQueue.insert(newNode);
-                }
-            }
+            /* If I put the ids that I remove from MinPQs on to a stack, and keep an array called onStack, I can always
+            check and if a value is already on the stack, I can break and pop the stack until I get to it and not have
+            to role back and etc*/
             if (!fromQueue.isEmpty()) minFNode = fromQueue.delMin();
-            if (minFNode.id == minTNode.id || (tDBS.hasPathTo(minFNode.id))) break;
+            if (minFNode.id == minTNode.id) break;
             if (!toQueue.isEmpty()) minTNode = toQueue.delMin();
-            if (minFNode.id == minTNode.id || (fDBS.hasPathTo(minTNode.id))) break;
+            if (minFNode.id == minTNode.id) break;
             for (int i : digraph.adj(minTNode.id)) {
                 if (i != minTNode.prevNode.id) {
+                    if (onStack[i]) shortPath = extractPath(minFNode, minTNode, i);
+                    onStack[i] = true;
+                    sPath.push(i);
                     newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
                     toQueue.insert(newNode);
                 }
             }
-            for (int i : digraph.reverse().adj(minTNode.id)) {
-                if (i != minTNode.id) {
-                    newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
-                    toQueue.insert(newNode);
-                }
+        }
+        // I still need to rewrite the code for when minFNode.id  = minTNode.id here
+        return shortPath;
+    }
 
-            }
+    private List<Integer> extractPath(Node minF, Node minT, int match) {
+        List<Integer> path = new ArrayList<>();
+        while (sPath.peek() != match) sPath.pop();
+        ancestor = match; // ancestor should be the first match
+        while (!sPath.isEmpty()) {
+            path.add(sPath.pop());
         }
-        ancestor = minFNode.id; // which should be the same as minFNode.id
-        while (true) {
-            if (!sPath.contains(minFNode.id)) {
-                sPath.add(minFNode.id);
+        while (minF.prevNode != null) {
+            if (!path.contains(minF.id)) {
+                path.add(minF.id);
             }
-            if (!sPath.contains(minTNode.id)){
-                sPath.add(minTNode.id);
-            }
-            if (minFNode.prevNode == null && minTNode.prevNode == null) break;
-            if (minFNode.prevNode != null) minFNode = minFNode.prevNode;
-            /* I can double check here also that I have the shortest path by testing minFNode==minTNode */
-            if (minTNode.prevNode != null) minTNode = minTNode.prevNode;
+            minF = minT.prevNode;
         }
-        Collections.sort(sPath);
-        return sPath;
+        while (minT.prevNode != null) {
+            if (!path.contains(minT.id)) {
+                path.add(minT.id);
+            }
+            minT = minT.prevNode;
+        }
+        return path;
     }
 
     public static void main(String[] args) {
