@@ -112,26 +112,34 @@ public class SAP {
         shortPath = new ArrayList<>();
         this.from = from;
         this.to = to;
+        DeluxBFS deluxBFS = new DeluxBFS(digraph, new ArrayList<>(Arrays.asList(from, to)));
         DeluxBFS fDBS = new DeluxBFS(digraph, from);
         DeluxBFS tDBS = new DeluxBFS(digraph, to);
         MinPQ<Node> fromQueue = new MinPQ<Node>(new Comparator<Node>() {
             @Override
             public int compare(Node o1, Node o2) {
                 // number of moves the parent has made plus 1 plus the number moves I have to take from where I am
-                if (o1.prevNode.movesTaken + 1 + tDBS.distTo(o1.id) > o2.prevNode.movesTaken + 1 + tDBS.distTo(o2.id))
-                    return -1;
-                else if (o2.prevNode.movesTaken + 1 + tDBS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + tDBS.distTo(o1.id))
-                    return 1;
+                // if (o1.prevNode.movesTaken + 1 + tDBS.distTo(o1.id) > o2.prevNode.movesTaken + 1 + tDBS.distTo(o2.id)) return -1;
+                if (o1.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o1.id), fDBS.distTo(o1.id)) > o2.prevNode.movesTaken + 1 +
+                        Math.min(deluxBFS.distTo(o2.id), fDBS.distTo(o2.id))) return -1;
+                    //else if (o2.prevNode.movesTaken + 1 + tDBS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + tDBS.distTo(o1.id)) return 1;
+                else if (o2.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o2.id), fDBS.distTo(o2.id)) > o1.prevNode.movesTaken + 1 +
+                        Math.min(deluxBFS.distTo(o1.id), fDBS.distTo(o1.id))) return 1;
                 return 0;
             }
         });
         MinPQ<Node> toQueue = new MinPQ<>(new Comparator<Node>() {
             @Override
             public int compare(Node o1, Node o2) {
-                if (o1.prevNode.movesTaken + 1 + fDBS.distTo(o1.id) > o2.prevNode.movesTaken + 1 + fDBS.distTo(o2.id))
-                    return -1;
-                else if (o2.prevNode.movesTaken + 1 + fDBS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + fDBS.distTo(o1.id))
-                    return 1;
+                // if (o1.prevNode.movesTaken + 1 + fDBS.distTo(o1.id) > o2.prevNode.movesTaken + 1 + fDBS.distTo(o2.id)) return -1;
+                if (o1.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o1.id),fDBS.distTo(o1.id))> o2.prevNode.movesTaken + 1 +
+                        Math.min(deluxBFS.distTo(o2.id),fDBS.distTo(o2.id))) return -1;
+                if (o1.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o1.id), fDBS.distTo(o1.id)) > o2.prevNode.movesTaken + 1 +
+                        Math.min(deluxBFS.distTo(o2.id), fDBS.distTo(o2.id))) return -1;
+                    //else if (o2.prevNode.movesTaken + 1 + fDBS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + fDBS.distTo(o1.id)) return 1;
+                    //else if (o2.prevNode.movesTaken + 1 + deluxBFS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + deluxBFS.distTo(o1.id)) return 1;
+                else if (o2.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o2.id), fDBS.distTo(o2.id)) > o1.prevNode.movesTaken + 1 +
+                        Math.min(deluxBFS.distTo(o1.id), fDBS.distTo(o1.id))) return 1;
                 return 0;
             }
         });
@@ -171,32 +179,26 @@ public class SAP {
                 toQueue.insert(newNode);
             }
         }
-//todo - CycleFinder does not work. I must be using the wrong one. There should be one for Directed Graphs or the issue is something else. Check it later
-        while (stop == false) {
-            if (!toQueue.isEmpty()) {
-                minTNode = toQueue.delMin();
-                if (sPath.peek() == minTNode.id || onStack[minTNode.id]) {
-                    stop=true;
-                    shortPath = extractPath(minFNode, minTNode, minTNode.id);
-                    Collections.sort(shortPath);
-                    return shortPath;
-                }
-                sPath.push(minTNode.id);
-                onStack[minTNode.id] = true;
-            }
-            /*if (minFNode.id == minTNode.id) {
+        if (!toQueue.isEmpty()) {
+            minTNode = toQueue.delMin();
+            if (sPath.peek() == minTNode.id || onStack[minTNode.id]) {
+                stop = true;
+                shortPath = extractPath(minFNode, minTNode, minTNode.id);
                 Collections.sort(shortPath);
                 return shortPath;
-            }*/
+            }
+            sPath.push(minTNode.id);
+            onStack[minTNode.id] = true;
+        }
+//todo - CycleFinder does not work. I must be using the wrong one. There should be one for Directed Graphs or the issue is something else. Check it later
+        while (stop == false) {
+
             for (int i : digraph.adj(minFNode.id)) {
                 if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
                     newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
                     fromQueue.insert(newNode);
                 }
             }
-            /* If I put the ids that I remove from MinPQs on to a stack, and keep an array called onStack, I can always
-            check and if a value is already on the stack, I can break and pop the stack until I get to it and not have
-            to role back and etc*/
             if (!fromQueue.isEmpty()) {
                 minFNode = fromQueue.delMin();
                 if (sPath.peek() == minFNode.id || onStack[minFNode.id]) {
@@ -208,12 +210,12 @@ public class SAP {
                 sPath.push(minFNode.id);
                 onStack[minFNode.id] = true;
             }
-
-         /*   if (minFNode.id == minTNode.id) {
-                shortPath = extractPath(minFNode, minTNode, minTNode.id);
-                Collections.sort(shortPath);
-                return shortPath;
-            }*/
+            for (int i : digraph.adj(minTNode.id)) {
+                if (i != minTNode.prevNode.id) {
+                    newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
+                    toQueue.insert(newNode);
+                }
+            }
             if (!toQueue.isEmpty()) {
                 minTNode = toQueue.delMin();
                 if (sPath.peek() == minTNode.id || onStack[minTNode.id]) {
@@ -224,22 +226,6 @@ public class SAP {
                 }
                 sPath.push(minTNode.id);
                 onStack[minTNode.id] = true;
-            }
-            /*if (minFNode.id == minTNode.id) {
-                shortPath = extractPath(minFNode, minTNode, minTNode.id);
-                Collections.sort(shortPath);
-                return shortPath;
-            }*/
-            for (int i : digraph.adj(minTNode.id)) {
-                if (i != minTNode.prevNode.id) {
-               /*     if (onStack[i]) {
-                        shortPath = extractPath(minFNode, minTNode, i);
-                        Collections.sort(shortPath);
-                        return shortPath;
-                    }*/
-                    newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
-                    toQueue.insert(newNode);
-                }
             }
         }
         return shortPath;
@@ -408,7 +394,7 @@ public class SAP {
         List<Integer> one = new ArrayList<>(Arrays.asList(13, 23, 24));
         List<Integer> two = new ArrayList<>(Arrays.asList(6, 16, 17));
         System.out.println("==========================================================================================");
-        System.out.println("The shortest common ancestor in above sets: " + sap.ancestor(one, two));
+        System.out.println("The shortest common ancestor in above sets should be 3, and it is: " + sap.ancestor(one, two));
         System.out.println("==========================================================================================");
         digraph = new Digraph(new In(new File("src/main/resources/digraph1.txt")));
         sap = new SAP(digraph);
@@ -421,7 +407,7 @@ public class SAP {
         System.out.println();
         sap = new SAP(digraph);
         System.out.println("ancestor should return 1 for values 3 and 11: " + sap.ancestor(3, 11));
-/********************************* Ambiguous tests **********************************************************/
+        System.out.println("********************************* Ambiguous tests ***************************************");
         digraph = new Digraph(new In(new File("src/main/resources/digraph-ambiguous-ancestor.txt")));
         sap = new SAP(digraph);
         System.out.print("The shortest path between 1 and 2 - in ambiguous-ancestor is [1 2]");
@@ -431,6 +417,7 @@ public class SAP {
             System.out.print(" " + i + " ");
         }
         System.out.println("]");
+        System.out.println("And the ancestor is : " + sap.ancestor(1, 2));
         System.out.println();
         System.out.print("The shortest path between 0 and 2 - in ambiguous-ancestor is [0 1 2]");
         System.out.print("[");
@@ -440,6 +427,7 @@ public class SAP {
             System.out.print(" " + i + " ");
         }
         System.out.println("]");
+        System.out.println("And the ancestor is : " + sap.ancestor(0, 2));
         System.out.println();
         System.out.print("The shortest path between 9 and 5 - in ambiguous-ancestor is [5, 6, 7, 8, 9]: ");
         System.out.print("[");
