@@ -15,6 +15,7 @@ public class SAP {
     Stack<Integer> sPath;
     List<Integer> shortPath;
     boolean[] onStack;
+    boolean stop = false;
 
     private class Node {
         private final int id;
@@ -83,8 +84,9 @@ public class SAP {
         List<Integer> currShortPath = null;
         for (int i : v) {
             for (int j : w) {
-                currShortPath = getPath(i, j);
-                currentAncestor = ancestor;
+                SAP s = new SAP(digraph);
+                currShortPath = s.getPath(i, j);
+                currentAncestor = s.ancestor;
                 if (prevShortPath.size() > currShortPath.size()) {
                     previousAncestor = currentAncestor;
                     prevShortPath = currShortPath;
@@ -100,7 +102,11 @@ public class SAP {
         if (from < 0 || from >= digraph.V())
             throw new IllegalArgumentException("vertex " + from + " is not between 0 and " + (digraph.V() - 1));
         if ((from == this.from || from == this.to) && (to == this.to || to == this.from)) return shortPath;
-        if (from == to) return shortPath = new ArrayList<>(from);
+        if (from == to) {
+            shortPath = new ArrayList<>();
+            shortPath.add(from);
+            return shortPath;
+        }
         if ((digraph.outdegree(to) == 0 && digraph.indegree(to) == 0) || (digraph.outdegree(from) == 0 &&
                 digraph.indegree(from) == 0)) return null;
         shortPath = new ArrayList<>();
@@ -149,7 +155,7 @@ public class SAP {
         }
         if (!fromQueue.isEmpty()) {
             minFNode = fromQueue.delMin();
-            if (sPath.peek() == minFNode.id) {
+            if (sPath.peek() == minFNode.id || onStack[minFNode.id]) {
                 shortPath = extractPath(minFNode, minTNode, minFNode.id);
                 Collections.sort(shortPath);
                 return shortPath;
@@ -166,10 +172,11 @@ public class SAP {
             }
         }
 //todo - CycleFinder does not work. I must be using the wrong one. There should be one for Directed Graphs or the issue is something else. Check it later
-        while (minFNode.id != minTNode.id) {
+        while (stop == false) {
             if (!toQueue.isEmpty()) {
                 minTNode = toQueue.delMin();
-                if (sPath.peek() == minTNode.id) {
+                if (sPath.peek() == minTNode.id || onStack[minTNode.id]) {
+                    stop=true;
                     shortPath = extractPath(minFNode, minTNode, minTNode.id);
                     Collections.sort(shortPath);
                     return shortPath;
@@ -177,10 +184,10 @@ public class SAP {
                 sPath.push(minTNode.id);
                 onStack[minTNode.id] = true;
             }
-            if (minFNode.id == minTNode.id) {
+            /*if (minFNode.id == minTNode.id) {
                 Collections.sort(shortPath);
                 return shortPath;
-            }
+            }*/
             for (int i : digraph.adj(minFNode.id)) {
                 if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
                     newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
@@ -192,7 +199,8 @@ public class SAP {
             to role back and etc*/
             if (!fromQueue.isEmpty()) {
                 minFNode = fromQueue.delMin();
-                if (sPath.peek() == minFNode.id) {
+                if (sPath.peek() == minFNode.id || onStack[minFNode.id]) {
+                    stop = true;
                     shortPath = extractPath(minFNode, minTNode, minFNode.id);
                     Collections.sort(shortPath);
                     return shortPath;
@@ -201,14 +209,15 @@ public class SAP {
                 onStack[minFNode.id] = true;
             }
 
-            if (minFNode.id == minTNode.id) {
+         /*   if (minFNode.id == minTNode.id) {
                 shortPath = extractPath(minFNode, minTNode, minTNode.id);
                 Collections.sort(shortPath);
                 return shortPath;
-            }
+            }*/
             if (!toQueue.isEmpty()) {
                 minTNode = toQueue.delMin();
-                if (sPath.peek() == minTNode.id) {
+                if (sPath.peek() == minTNode.id || onStack[minTNode.id]) {
+                    stop = true;
                     shortPath = extractPath(minFNode, minTNode, minTNode.id);
                     Collections.sort(shortPath);
                     return shortPath;
@@ -216,11 +225,11 @@ public class SAP {
                 sPath.push(minTNode.id);
                 onStack[minTNode.id] = true;
             }
-            if (minFNode.id == minTNode.id) {
+            /*if (minFNode.id == minTNode.id) {
                 shortPath = extractPath(minFNode, minTNode, minTNode.id);
                 Collections.sort(shortPath);
                 return shortPath;
-            }
+            }*/
             for (int i : digraph.adj(minTNode.id)) {
                 if (i != minTNode.prevNode.id) {
                /*     if (onStack[i]) {
@@ -341,6 +350,7 @@ public class SAP {
         System.out.println();
         System.out.print("The path between 1 and 6 should be: [  0 1 2 6 ] ");
         System.out.print("[");
+        sap = new SAP(digraph);
         for (int i : sap.getPath(1, 6)) {
             System.out.print(" " + i + " ");
         }
@@ -349,6 +359,7 @@ public class SAP {
         System.out.println();
         System.out.print("The path between 17 and 24 should be: [  5 10 12 17 20 24 ] ");
         System.out.print("[");
+        sap = new SAP(digraph);
         for (int i : sap.getPath(17, 24)) {
             System.out.print(" " + i + " ");
         }
@@ -357,6 +368,7 @@ public class SAP {
         System.out.println();
         System.out.print("The path between 23 and 24 should be: [ 24 23 20 ] ");
         System.out.print("[");
+        sap = new SAP(digraph);
         for (int i : sap.getPath(23, 24)) {
             System.out.print(" " + i + " ");
         }
@@ -366,6 +378,7 @@ public class SAP {
         System.out.println();
         System.out.print("The path between 11 and 4 should be: [  11 5 4 2 1 0 ] ");
         System.out.print("[");
+        sap = new SAP(digraph);
         for (int i : sap.getPath(11, 4)) {
             System.out.print(" " + i + " ");
         }
@@ -374,6 +387,7 @@ public class SAP {
         System.out.println();
         System.out.print("The path between 17 and 19 should be: [ 17 5 10 12 19 ] ");
         System.out.print("[");
+        sap = new SAP(digraph);
         for (int i : sap.getPath(17, 19)) {
             System.out.print(" " + i + " ");
         }
@@ -382,12 +396,15 @@ public class SAP {
         System.out.println();
         System.out.print("The path between 17 and 17 should be: [ 17 ] ");
         System.out.print("[");
+        sap = new SAP(digraph);
         for (int i : sap.getPath(17, 17)) {
             System.out.print(" " + i + " ");
         }
         System.out.println("]");
+        sap = new SAP(digraph);
         System.out.println("And the ancestor is : " + sap.ancestor(17, 17));
         System.out.println();
+        sap = new SAP(digraph);
         List<Integer> one = new ArrayList<>(Arrays.asList(13, 23, 24));
         List<Integer> two = new ArrayList<>(Arrays.asList(6, 16, 17));
         System.out.println("==========================================================================================");
@@ -402,6 +419,7 @@ public class SAP {
         }
         System.out.println("]");
         System.out.println();
+        sap = new SAP(digraph);
         System.out.println("ancestor should return 1 for values 3 and 11: " + sap.ancestor(3, 11));
 /********************************* Ambiguous tests **********************************************************/
         digraph = new Digraph(new In(new File("src/main/resources/digraph-ambiguous-ancestor.txt")));
@@ -416,7 +434,8 @@ public class SAP {
         System.out.println();
         System.out.print("The shortest path between 0 and 2 - in ambiguous-ancestor is [0 1 2]");
         System.out.print("[");
-        // test 1 and 2 for ambiguous-ancestor
+        // test 0 and 2 for ambiguous-ancestor
+        sap = new SAP(digraph);
         for (int i : sap.getPath(0, 2)) {
             System.out.print(" " + i + " ");
         }
@@ -424,13 +443,15 @@ public class SAP {
         System.out.println();
         System.out.print("The shortest path between 9 and 5 - in ambiguous-ancestor is [5, 6, 7, 8, 9]: ");
         System.out.print("[");
-        // test 1 and 2 for ambiguous-ancestor
+        // find the shortest path between 9 and 5 for ambiguous-ancestor
+        sap = new SAP(digraph);
         for (int i : sap.getPath(9, 5)) {
             System.out.print(" " + i + " ");
         }
         System.out.println("]");
         System.out.println();
         System.out.print("The path between 27 and 0 should be: Exception ");
+        sap = new SAP(digraph);
         System.out.print("[");
         try {
             for (int i : sap.getPath(27, 0)) {
