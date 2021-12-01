@@ -119,27 +119,26 @@ public class SAP {
             @Override
             public int compare(Node o1, Node o2) {
                 // number of moves the parent has made plus 1 plus the number moves I have to take from where I am
-                // if (o1.prevNode.movesTaken + 1 + tDBS.distTo(o1.id) > o2.prevNode.movesTaken + 1 + tDBS.distTo(o2.id)) return -1;
-                if (o1.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o1.id), fDBS.distTo(o1.id)) > o2.prevNode.movesTaken + 1 +
-                        Math.min(deluxBFS.distTo(o2.id), fDBS.distTo(o2.id))) return -1;
-                    //else if (o2.prevNode.movesTaken + 1 + tDBS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + tDBS.distTo(o1.id)) return 1;
-                else if (o2.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o2.id), fDBS.distTo(o2.id)) > o1.prevNode.movesTaken + 1 +
-                        Math.min(deluxBFS.distTo(o1.id), fDBS.distTo(o1.id))) return 1;
+                if (o1.prevNode.movesTaken + 1 + tDBS.distTo(o1.id) > o2.prevNode.movesTaken + 1 + tDBS.distTo(o2.id))
+                    return -1;
+                    //if (o1.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o1.id), fDBS.distTo(o1.id)) > o2.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o2.id), fDBS.distTo(o2.id))) return -1;
+                else if (o2.prevNode.movesTaken + 1 + tDBS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + tDBS.distTo(o1.id))
+                    return 1;
+                //else if (o2.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o2.id), fDBS.distTo(o2.id)) > o1.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o1.id), fDBS.distTo(o1.id))) return 1;
                 return 0;
             }
         });
         MinPQ<Node> toQueue = new MinPQ<>(new Comparator<Node>() {
             @Override
             public int compare(Node o1, Node o2) {
-                // if (o1.prevNode.movesTaken + 1 + fDBS.distTo(o1.id) > o2.prevNode.movesTaken + 1 + fDBS.distTo(o2.id)) return -1;
-                if (o1.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o1.id),fDBS.distTo(o1.id))> o2.prevNode.movesTaken + 1 +
-                        Math.min(deluxBFS.distTo(o2.id),fDBS.distTo(o2.id))) return -1;
-                if (o1.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o1.id), fDBS.distTo(o1.id)) > o2.prevNode.movesTaken + 1 +
-                        Math.min(deluxBFS.distTo(o2.id), fDBS.distTo(o2.id))) return -1;
-                    //else if (o2.prevNode.movesTaken + 1 + fDBS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + fDBS.distTo(o1.id)) return 1;
-                    //else if (o2.prevNode.movesTaken + 1 + deluxBFS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + deluxBFS.distTo(o1.id)) return 1;
-                else if (o2.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o2.id), fDBS.distTo(o2.id)) > o1.prevNode.movesTaken + 1 +
-                        Math.min(deluxBFS.distTo(o1.id), fDBS.distTo(o1.id))) return 1;
+                if (o1.prevNode.movesTaken + 1 + fDBS.distTo(o1.id) > o2.prevNode.movesTaken + 1 + fDBS.distTo(o2.id))
+                    return -1;
+                    //if (o1.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o1.id),fDBS.distTo(o1.id))> o2.prevNode.movesTaken + 1 +Math.min(deluxBFS.distTo(o2.id),fDBS.distTo(o2.id))) return -1;
+                    //if (o1.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o1.id), fDBS.distTo(o1.id)) > o2.prevNode.movesTaken + 1 +Math.min(deluxBFS.distTo(o2.id), fDBS.distTo(o2.id))) return -1;
+                else if (o2.prevNode.movesTaken + 1 + fDBS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + fDBS.distTo(o1.id))
+                    return 1;
+                //else if (o2.prevNode.movesTaken + 1 + deluxBFS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + deluxBFS.distTo(o1.id)) return 1;
+                //else if (o2.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o2.id), fDBS.distTo(o2.id)) > o1.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o1.id), fDBS.distTo(o1.id))) return 1;
                 return 0;
             }
         });
