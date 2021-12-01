@@ -134,6 +134,8 @@ public class SAP {
         Node toNode = new Node(to, null, 0, fDBS.distTo(to));
         toQueue.insert(toNode);
         Node minFNode = fromQueue.delMin();
+        sPath.push(minFNode.id);
+        onStack[minFNode.id] = true;
         Node minTNode = toQueue.delMin();
         sPath.push(minTNode.id);
         onStack[minTNode.id] = true;
@@ -147,7 +149,7 @@ public class SAP {
         }
         if (!fromQueue.isEmpty()) {
             minFNode = fromQueue.delMin();
-            if (onStack[minFNode.id]) {
+            if (sPath.peek() == minFNode.id) {
                 shortPath = extractPath(minFNode, minTNode, minFNode.id);
                 Collections.sort(shortPath);
                 return shortPath;
@@ -159,12 +161,6 @@ public class SAP {
         /* populate ToQueue */
         for (int i : digraph.adj(minTNode.id)) {
             if (i != to) {
-                // I really do not see I should pass both nodes
-                if (onStack[i]) {
-                    shortPath = extractPath(minFNode, minTNode, minFNode.id);
-                    Collections.sort(shortPath);
-                    return shortPath;
-                }
                 newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
                 toQueue.insert(newNode);
             }
@@ -173,6 +169,11 @@ public class SAP {
         while (minFNode.id != minTNode.id) {
             if (!toQueue.isEmpty()) {
                 minTNode = toQueue.delMin();
+                if (sPath.peek() == minTNode.id) {
+                    shortPath = extractPath(minFNode, minTNode, minTNode.id);
+                    Collections.sort(shortPath);
+                    return shortPath;
+                }
                 sPath.push(minTNode.id);
                 onStack[minTNode.id] = true;
             }
@@ -182,11 +183,6 @@ public class SAP {
             }
             for (int i : digraph.adj(minFNode.id)) {
                 if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
-                    if (onStack[i]) {
-                        shortPath = extractPath(minFNode, minTNode, i);
-                        Collections.sort(shortPath);
-                        return shortPath;
-                    }
                     newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
                     fromQueue.insert(newNode);
                 }
@@ -196,6 +192,11 @@ public class SAP {
             to role back and etc*/
             if (!fromQueue.isEmpty()) {
                 minFNode = fromQueue.delMin();
+                if (sPath.peek() == minFNode.id) {
+                    shortPath = extractPath(minFNode, minTNode, minFNode.id);
+                    Collections.sort(shortPath);
+                    return shortPath;
+                }
                 sPath.push(minFNode.id);
                 onStack[minFNode.id] = true;
             }
@@ -203,25 +204,30 @@ public class SAP {
             if (minFNode.id == minTNode.id) {
                 shortPath = extractPath(minFNode, minTNode, minTNode.id);
                 Collections.sort(shortPath);
-                break;
+                return shortPath;
             }
             if (!toQueue.isEmpty()) {
                 minTNode = toQueue.delMin();
+                if (sPath.peek() == minTNode.id) {
+                    shortPath = extractPath(minFNode, minTNode, minTNode.id);
+                    Collections.sort(shortPath);
+                    return shortPath;
+                }
                 sPath.push(minTNode.id);
                 onStack[minTNode.id] = true;
             }
             if (minFNode.id == minTNode.id) {
                 shortPath = extractPath(minFNode, minTNode, minTNode.id);
                 Collections.sort(shortPath);
-                break;
+                return shortPath;
             }
             for (int i : digraph.adj(minTNode.id)) {
                 if (i != minTNode.prevNode.id) {
-                    if (onStack[i]) {
+               /*     if (onStack[i]) {
                         shortPath = extractPath(minFNode, minTNode, i);
                         Collections.sort(shortPath);
                         return shortPath;
-                    }
+                    }*/
                     newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
                     toQueue.insert(newNode);
                 }
@@ -241,7 +247,7 @@ public class SAP {
             if (!path.contains(minF.id)) {
                 path.add(minF.id);
             }
-            minF = minT.prevNode;
+            minF = minF.prevNode;
         }
         while (minT.prevNode != null) {
             if (!path.contains(minT.id)) {
