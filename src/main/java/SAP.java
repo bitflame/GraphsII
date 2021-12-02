@@ -117,9 +117,9 @@ public class SAP {
             @Override
             public int compare(Node o1, Node o2) {
                 // number of moves the parent has made plus 1 plus the number moves I have to take from where I am
-                if (o1.prevNode.movesTaken + 1 + tDBS.distTo(o1.id) > o2.prevNode.movesTaken + 1 + tDBS.distTo(o2.id))
+                if (o1.prevNode.movesTaken + 1 + o1.movesRemaining > o2.prevNode.movesTaken + 1 + o2.movesRemaining)
                     return -1;
-                else if (o2.prevNode.movesTaken + 1 + tDBS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + tDBS.distTo(o1.id))
+                else if (o2.prevNode.movesTaken + 1 + o2.movesRemaining> o1.prevNode.movesTaken + 1 + o1.movesRemaining)
                     return 1;
                 return 0;
             }
@@ -127,9 +127,9 @@ public class SAP {
         MinPQ<Node> toQueue = new MinPQ<>(new Comparator<Node>() {
             @Override
             public int compare(Node o1, Node o2) {
-                if (o1.prevNode.movesTaken + 1 + fDBS.distTo(o1.id) > o2.prevNode.movesTaken + 1 + fDBS.distTo(o2.id))
+                if (o1.prevNode.movesTaken + 1 + o1.movesRemaining> o2.prevNode.movesTaken + 1 + o2.movesRemaining)
                     return -1;
-                else if (o2.prevNode.movesTaken + 1 + fDBS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + fDBS.distTo(o1.id))
+                else if (o2.prevNode.movesTaken + 1 + o2.movesRemaining > o1.prevNode.movesTaken + 1 + o1.movesRemaining)
                     return 1;
                 return 0;
             }
