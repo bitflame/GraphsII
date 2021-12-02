@@ -49,25 +49,26 @@ public class SAPII {
             public int compare(Node o1, Node o2) {
                 // number of moves the parent has made plus 1 plus the number moves I have to take from where I am
                 if (o1.prevNode.movesTaken + 1 + o1.movesRemaining > o2.prevNode.movesTaken + 1 + o2.movesRemaining)
-                    return -1;
-                else if (o2.prevNode.movesTaken + 1 + o2.movesRemaining > o1.prevNode.movesTaken + 1 + o1.movesRemaining)
                     return 1;
+                else if (o2.prevNode.movesTaken + 1 + o2.movesRemaining > o1.prevNode.movesTaken + 1 + o1.movesRemaining)
+                    return -1;
                 return 0;
             }
         });
-        Node fromNode = new Node(from,null,0,tDBS.distTo(to));
+        Node fromNode = new Node(from, null, 0, tDBS.distTo(to));
         for (int i = 0; i < digraph.V(); i++) {
             if (fDBS.hasPathTo(i)) {
-                Node newNode = new Node(i,fromNode,fDBS.distTo(i),fDBS.distTo(to));
+                Node newNode = new Node(i, fromNode, fDBS.distTo(i), fDBS.distTo(to));
                 fromQueue.insert(newNode);
             }
         }
+        Node minNode = fromQueue.delMin();
 
         for (int i : fDBS.pathTo(from)) {
             Node newNode = new Node(i, null, 0, tDBS.distTo(i));
             fromQueue.insert(newNode);
         }
-        for (int i:fRevDBS.pathTo(from)) {
+        for (int i : fRevDBS.pathTo(from)) {
             Node newNode = new Node(i, null, 0, tDBS.distTo(i));
             fromQueue.insert(newNode);
         }
