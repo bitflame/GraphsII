@@ -12,7 +12,6 @@ public class SAP {
     int ancestor = -1;
     int from;
     int to;
-    Stack<Integer> sPath;
     List<Integer> shortPath;
     boolean[] onStack;
     boolean stop = false;
@@ -35,7 +34,6 @@ public class SAP {
     public SAP(Digraph digraph) {
         if (digraph == null) throw new IllegalArgumentException("Digraph value can not be null");
         DirectedCycle cycleFinder = new DirectedCycle(digraph);
-        sPath = new Stack<>();
         onStack = new boolean[digraph.V()];
         if (cycleFinder.hasCycle()) {
             hasCycle = true;
@@ -105,7 +103,7 @@ public class SAP {
         if (from == to) {
             shortPath = new ArrayList<>();
             shortPath.add(from);
-            ancestor=from;
+            ancestor = from;
             return shortPath;
         }
         if ((digraph.outdegree(to) == 0 && digraph.indegree(to) == 0) || (digraph.outdegree(from) == 0 &&
@@ -141,10 +139,8 @@ public class SAP {
         Node toNode = new Node(to, null, 0, fDBS.distTo(to));
         toQueue.insert(toNode);
         Node minFNode = fromQueue.delMin();
-        sPath.push(minFNode.id);
         onStack[minFNode.id] = true;
         Node minTNode = toQueue.delMin();
-        sPath.push(minTNode.id);
         onStack[minTNode.id] = true;
         Node newNode;
         /* Need to populate fromQueue and toQueue here once b/c grandparent is null, and throws an exception when I check
@@ -156,17 +152,11 @@ public class SAP {
         }
         if (!fromQueue.isEmpty()) {
             minFNode = fromQueue.delMin();
-            if (sPath.peek() == minFNode.id){
-                shortPath = extractPath(minFNode, minTNode, minFNode.id);
-                Collections.sort(shortPath);
-                return shortPath;
-            } else if (onStack[minFNode.id]) {
-                while (sPath.peek()!=minFNode.id) sPath.pop();
+            if (onStack[minFNode.id]) {
                 shortPath = extractPath(minFNode, minTNode, minFNode.id);
                 Collections.sort(shortPath);
                 return shortPath;
             }
-            sPath.push(minFNode.id);
             onStack[minFNode.id] = true;
         }
 
@@ -179,42 +169,30 @@ public class SAP {
         }
         if (!toQueue.isEmpty()) {
             minTNode = toQueue.delMin();
-            if (sPath.peek() == minTNode.id){
+            if (onStack[minTNode.id]) {
                 shortPath = extractPath(minFNode, minTNode, minTNode.id);
                 Collections.sort(shortPath);
                 return shortPath;
-            } else if (onStack[minTNode.id]) {
-                while (sPath.peek()!=minTNode.id) sPath.peek();
-                shortPath = extractPath(minFNode,minTNode,minTNode.id);
-                Collections.sort(shortPath);
-                return shortPath;
             }
-            sPath.push(minTNode.id);
             onStack[minTNode.id] = true;
         }
 //todo - CycleFinder does not work. I must be using the wrong one. There should be one for Directed Graphs or the issue is something else. Check it later
         while (stop == false) {
             for (int i : digraph.adj(minFNode.id)) {
-            if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
-                newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
-                fromQueue.insert(newNode);
+                if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
+                    newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
+                    fromQueue.insert(newNode);
+                }
             }
-        }
             if (!fromQueue.isEmpty()) {
                 minFNode = fromQueue.delMin();
-                if (sPath.peek() == minFNode.id) {
+                if (onStack[minFNode.id]) {
+                    while (minTNode.id != minFNode.id) minTNode = minTNode.prevNode;
                     stop = true;
                     shortPath = extractPath(minFNode, minTNode, minFNode.id);
                     Collections.sort(shortPath);
                     return shortPath;
-                }else if (onStack[minFNode.id]) {
-                    while(sPath.peek()!=minFNode.id) sPath.pop();
-                    stop=true;
-                    shortPath = extractPath(minFNode, minTNode, minFNode.id);
-                    Collections.sort(shortPath);
-                    return shortPath;
                 }
-                sPath.push(minFNode.id);
                 onStack[minFNode.id] = true;
             }
 
@@ -226,19 +204,13 @@ public class SAP {
             }
             if (!toQueue.isEmpty()) {
                 minTNode = toQueue.delMin();
-                if (sPath.peek() == minTNode.id)  {
+                if (onStack[minTNode.id]) {
+                    while (minTNode.id != minFNode.id) minFNode = minFNode.prevNode;
                     stop = true;
                     shortPath = extractPath(minFNode, minTNode, minTNode.id);
                     Collections.sort(shortPath);
                     return shortPath;
-                } else if(onStack[minTNode.id]) {
-                    while (sPath.peek()!=minTNode.id) sPath.pop();
-                    stop=true;
-                    shortPath = extractPath(minFNode, minTNode,minTNode.id);
-                    Collections.sort(shortPath);
-                    return shortPath;
                 }
-                sPath.push(minTNode.id);
                 onStack[minTNode.id] = true;
             }
         }
@@ -247,11 +219,7 @@ public class SAP {
 
     private List<Integer> extractPath(Node minF, Node minT, int match) {
         List<Integer> path = new ArrayList<>();
-        while (sPath.peek() != match && sPath.peek() != minF.id && sPath.peek() != minT.id) sPath.pop();
         ancestor = match; // ancestor should be the first match
-        while (!sPath.isEmpty()) {
-            path.add(sPath.pop());
-        }
         while (minF != null && minF.prevNode != null) {
             if (!path.contains(minF.id)) {
                 path.add(minF.id);
@@ -264,6 +232,8 @@ public class SAP {
             }
             minT = minT.prevNode;
         }
+        if (!path.contains(from)) path.add(from);
+        if (!path.contains(to)) path.add(to);
         return path;
     }
 
