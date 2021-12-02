@@ -105,6 +105,7 @@ public class SAP {
         if (from == to) {
             shortPath = new ArrayList<>();
             shortPath.add(from);
+            ancestor=from;
             return shortPath;
         }
         if ((digraph.outdegree(to) == 0 && digraph.indegree(to) == 0) || (digraph.outdegree(from) == 0 &&
@@ -112,7 +113,6 @@ public class SAP {
         shortPath = new ArrayList<>();
         this.from = from;
         this.to = to;
-        DeluxBFS deluxBFS = new DeluxBFS(digraph, new ArrayList<>(Arrays.asList(from, to)));
         DeluxBFS fDBS = new DeluxBFS(digraph, from);
         DeluxBFS tDBS = new DeluxBFS(digraph, to);
         MinPQ<Node> fromQueue = new MinPQ<Node>(new Comparator<Node>() {
@@ -121,10 +121,8 @@ public class SAP {
                 // number of moves the parent has made plus 1 plus the number moves I have to take from where I am
                 if (o1.prevNode.movesTaken + 1 + tDBS.distTo(o1.id) > o2.prevNode.movesTaken + 1 + tDBS.distTo(o2.id))
                     return -1;
-                    //if (o1.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o1.id), fDBS.distTo(o1.id)) > o2.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o2.id), fDBS.distTo(o2.id))) return -1;
                 else if (o2.prevNode.movesTaken + 1 + tDBS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + tDBS.distTo(o1.id))
                     return 1;
-                //else if (o2.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o2.id), fDBS.distTo(o2.id)) > o1.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o1.id), fDBS.distTo(o1.id))) return 1;
                 return 0;
             }
         });
@@ -133,12 +131,8 @@ public class SAP {
             public int compare(Node o1, Node o2) {
                 if (o1.prevNode.movesTaken + 1 + fDBS.distTo(o1.id) > o2.prevNode.movesTaken + 1 + fDBS.distTo(o2.id))
                     return -1;
-                    //if (o1.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o1.id),fDBS.distTo(o1.id))> o2.prevNode.movesTaken + 1 +Math.min(deluxBFS.distTo(o2.id),fDBS.distTo(o2.id))) return -1;
-                    //if (o1.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o1.id), fDBS.distTo(o1.id)) > o2.prevNode.movesTaken + 1 +Math.min(deluxBFS.distTo(o2.id), fDBS.distTo(o2.id))) return -1;
                 else if (o2.prevNode.movesTaken + 1 + fDBS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + fDBS.distTo(o1.id))
                     return 1;
-                //else if (o2.prevNode.movesTaken + 1 + deluxBFS.distTo(o2.id) > o1.prevNode.movesTaken + 1 + deluxBFS.distTo(o1.id)) return 1;
-                //else if (o2.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o2.id), fDBS.distTo(o2.id)) > o1.prevNode.movesTaken + 1 + Math.min(deluxBFS.distTo(o1.id), fDBS.distTo(o1.id))) return 1;
                 return 0;
             }
         });
@@ -162,7 +156,12 @@ public class SAP {
         }
         if (!fromQueue.isEmpty()) {
             minFNode = fromQueue.delMin();
-            if (sPath.peek() == minFNode.id || onStack[minFNode.id]) {
+            if (sPath.peek() == minFNode.id){
+                shortPath = extractPath(minFNode, minTNode, minFNode.id);
+                Collections.sort(shortPath);
+                return shortPath;
+            } else if (onStack[minFNode.id]) {
+                while (sPath.peek()!=minFNode.id) sPath.pop();
                 shortPath = extractPath(minFNode, minTNode, minFNode.id);
                 Collections.sort(shortPath);
                 return shortPath;
@@ -180,9 +179,13 @@ public class SAP {
         }
         if (!toQueue.isEmpty()) {
             minTNode = toQueue.delMin();
-            if (sPath.peek() == minTNode.id || onStack[minTNode.id]) {
-                stop = true;
+            if (sPath.peek() == minTNode.id){
                 shortPath = extractPath(minFNode, minTNode, minTNode.id);
+                Collections.sort(shortPath);
+                return shortPath;
+            } else if (onStack[minTNode.id]) {
+                while (sPath.peek()!=minTNode.id) sPath.peek();
+                shortPath = extractPath(minFNode,minTNode,minTNode.id);
                 Collections.sort(shortPath);
                 return shortPath;
             }
@@ -191,17 +194,22 @@ public class SAP {
         }
 //todo - CycleFinder does not work. I must be using the wrong one. There should be one for Directed Graphs or the issue is something else. Check it later
         while (stop == false) {
-
             for (int i : digraph.adj(minFNode.id)) {
-                if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
-                    newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
-                    fromQueue.insert(newNode);
-                }
+            if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
+                newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
+                fromQueue.insert(newNode);
             }
+        }
             if (!fromQueue.isEmpty()) {
                 minFNode = fromQueue.delMin();
-                if (sPath.peek() == minFNode.id || onStack[minFNode.id]) {
+                if (sPath.peek() == minFNode.id) {
                     stop = true;
+                    shortPath = extractPath(minFNode, minTNode, minFNode.id);
+                    Collections.sort(shortPath);
+                    return shortPath;
+                }else if (onStack[minFNode.id]) {
+                    while(sPath.peek()!=minFNode.id) sPath.pop();
+                    stop=true;
                     shortPath = extractPath(minFNode, minTNode, minFNode.id);
                     Collections.sort(shortPath);
                     return shortPath;
@@ -209,6 +217,7 @@ public class SAP {
                 sPath.push(minFNode.id);
                 onStack[minFNode.id] = true;
             }
+
             for (int i : digraph.adj(minTNode.id)) {
                 if (i != minTNode.prevNode.id) {
                     newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
@@ -217,9 +226,15 @@ public class SAP {
             }
             if (!toQueue.isEmpty()) {
                 minTNode = toQueue.delMin();
-                if (sPath.peek() == minTNode.id || onStack[minTNode.id]) {
+                if (sPath.peek() == minTNode.id)  {
                     stop = true;
                     shortPath = extractPath(minFNode, minTNode, minTNode.id);
+                    Collections.sort(shortPath);
+                    return shortPath;
+                } else if(onStack[minTNode.id]) {
+                    while (sPath.peek()!=minTNode.id) sPath.pop();
+                    stop=true;
+                    shortPath = extractPath(minFNode, minTNode,minTNode.id);
                     Collections.sort(shortPath);
                     return shortPath;
                 }
