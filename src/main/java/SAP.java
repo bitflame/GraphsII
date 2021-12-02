@@ -149,7 +149,7 @@ public class SAP {
         for (int i : digraph.adj(minFNode.id)) {
             newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
             fromQueue.insert(newNode);
-        }
+        }// todo - I should also try adding all the nodes that have a route to to 'from' using fDBS
         if (!fromQueue.isEmpty()) {
             minFNode = fromQueue.delMin();
             if (onStack[minFNode.id]) {
