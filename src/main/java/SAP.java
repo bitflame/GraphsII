@@ -119,7 +119,7 @@ public class SAP {
                 // number of moves the parent has made plus 1 plus the number moves I have to take from where I am
                 if (o1.prevNode.movesTaken + 1 + o1.movesRemaining > o2.prevNode.movesTaken + 1 + o2.movesRemaining)
                     return 1;
-                else if (o2.prevNode.movesTaken + 1 + o2.movesRemaining> o1.prevNode.movesTaken + 1 + o1.movesRemaining)
+                else if (o2.prevNode.movesTaken + 1 + o2.movesRemaining > o1.prevNode.movesTaken + 1 + o1.movesRemaining)
                     return -1;
                 return 0;
             }
@@ -127,7 +127,7 @@ public class SAP {
         MinPQ<Node> toQueue = new MinPQ<>(new Comparator<Node>() {
             @Override
             public int compare(Node o1, Node o2) {
-                if (o1.prevNode.movesTaken + 1 + o1.movesRemaining> o2.prevNode.movesTaken + 1 + o2.movesRemaining)
+                if (o1.prevNode.movesTaken + 1 + o1.movesRemaining > o2.prevNode.movesTaken + 1 + o2.movesRemaining)
                     return 1;
                 else if (o2.prevNode.movesTaken + 1 + o2.movesRemaining > o1.prevNode.movesTaken + 1 + o1.movesRemaining)
                     return -1;
@@ -149,7 +149,7 @@ public class SAP {
         for (int i : digraph.adj(minFNode.id)) {
             newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
             fromQueue.insert(newNode);
-        }// todo - I should also try adding all the nodes that have a route to to 'from' using fDBS
+        }
         if (!fromQueue.isEmpty()) {
             minFNode = fromQueue.delMin();
             if (onStack[minFNode.id]) {
@@ -176,8 +176,11 @@ public class SAP {
             }
             onStack[minTNode.id] = true;
         }
-//todo - CycleFinder does not work. I must be using the wrong one. There should be one for Directed Graphs or the issue is something else. Check it later
+        Node previousFromNode;
+        Node previousToNode;
         while (stop == false) {
+            previousToNode=minTNode;
+            previousFromNode=minFNode;
             for (int i : digraph.adj(minFNode.id)) {
                 if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
                     newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
@@ -213,6 +216,7 @@ public class SAP {
                 }
                 onStack[minTNode.id] = true;
             }
+            if (minFNode==previousFromNode && minTNode== previousToNode) break;
         }
         return shortPath;
     }
@@ -389,6 +393,16 @@ public class SAP {
         }
         System.out.println("]");
         System.out.println();
+
+        sap = new SAP(digraph);
+        System.out.print("The path between 7 and 2 should be: [ 0 1 2 3 7 ] ");
+        System.out.print("[");
+        for (int i : sap.getPath(7, 2)) {
+            System.out.print(" " + i + " ");
+        }
+        System.out.println("]");
+        System.out.println();
+
         sap = new SAP(digraph);
         System.out.println("ancestor should return 1 for values 3 and 11: " + sap.ancestor(3, 11));
         System.out.println("********************************* Ambiguous tests ***************************************");
@@ -413,7 +427,7 @@ public class SAP {
         System.out.println("]");
         System.out.println("And the ancestor is : " + sap.ancestor(0, 2));
         System.out.println();
-        System.out.print("The shortest path between 9 and 5 - in ambiguous-ancestor is [5, 6, 7, 8, 9]: ");
+        System.out.print("The shortest path between 9 and 5 - in ambiguous-ancestor is [] - an empty set. There is not path : ");
         System.out.print("[");
         // find the shortest path between 9 and 5 for ambiguous-ancestor
         sap = new SAP(digraph);

@@ -28,13 +28,15 @@ class SAPSpecification extends Specification {
         "digraph1.txt"                   | 2    | 0  | [0, 2]
         "digraph1.txt"                   | 10   | 4  | [1, 4, 5, 10]
         "digraph1.txt"                   | 3    | 11 | [1, 3, 5, 10, 11]
+        "digraph1.txt"                   | 7    | 2  | [0, 1, 2, 3, 7]
         "digraph-ambiguous-ancestor.txt" | 1    | 2  | [1, 2]
         "digraph-ambiguous-ancestor.txt" | 0    | 2  | [0, 1, 2]
         "digraph-ambiguous-ancestor.txt" | 0    | 3  | [0, 1, 2, 3]
-        "digraph-ambiguous-ancestor.txt" | 9    | 5  | [5, 6, 7, 8, 9]
         "digraph-ambiguous-ancestor.txt" | 4    | 3  | [2, 3, 4]
         "digraph-ambiguous-ancestor.txt" | 4    | 3  | [2, 3, 4]
         "digraph-ambiguous-ancestor.txt" | 8    | 6  | [6, 7, 8]
+        // "digraph-ambiguous-ancestor.txt" | 9    | 5  | [5, 6, 7, 8, 9]
+        "digraph-ambiguous-ancestor.txt" | 9    | 5  | []
     }
 
 
@@ -95,6 +97,10 @@ class SAPSpecification extends Specification {
         "digraph25.txt"                  | 19   | 24 | 12
         "digraph25.txt"                  | 18   | 1  | 0
         "digraph25.txt"                  | 22   | 19 | 0
+        "digraph1.txt"                   | 3    | 11 | 1
+        "digraph1.txt"                   | 9    | 12 | 5
+        "digraph1.txt"                   | 7    | 2  | 0
+        "digraph1.txt"                   | 1    | 6  | -1
         "digraph-ambiguous-ancestor.txt" | 1    | 2  | 2
         "digraph-ambiguous-ancestor.txt" | 0    | 2  | 2
         "digraph-ambiguous-ancestor.txt" | 0    | 10 | 10
