@@ -15,7 +15,7 @@ public class WordNet {
             synset = a[1];
             String[] syns = synset.split(" ");
             for (String s:syns) {
-                System.out.print(s);
+                System.out.print(" "+s);
             }
             System.out.println();
         }
