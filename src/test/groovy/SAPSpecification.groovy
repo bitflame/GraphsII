@@ -25,6 +25,10 @@ class SAPSpecification extends Specification {
         "digraph25.txt"                  | 11   | 14 | [0, 1, 2, 3, 5, 7, 11, 14]
         "digraph25.txt"                  | 17   | 19 | [5, 10, 12, 17, 19]
         "digraph25.txt"                  | 17   | 17 | [17]
+        "digraph25.txt"                  | 13   | 6  | [0, 1, 2, 3, 6, 7, 13]
+        "digraph25.txt"                  | 23   | 17 | [5, 10, 12, 17, 20, 23]
+        "digraph25.txt"                  | 23   | 6  | [2, 5, 6, 12, 20, 23]
+        "digraph25.txt"                  | 13   | 16 | [3, 7, 9, 13, 16]
         "digraph1.txt"                   | 2    | 0  | [0, 2]
         "digraph1.txt"                   | 10   | 4  | [1, 4, 5, 10]
         "digraph1.txt"                   | 3    | 11 | [1, 3, 5, 10, 11]
@@ -38,7 +42,6 @@ class SAPSpecification extends Specification {
         // "digraph-ambiguous-ancestor.txt" | 9    | 5  | [5, 6, 7, 8, 9]
         "digraph-ambiguous-ancestor.txt" | 9    | 5  | []
     }
-
 
     def "SAP length() should return the length of the shortest path between two points"() {
         when:
@@ -97,6 +100,7 @@ class SAPSpecification extends Specification {
         "digraph25.txt"                  | 19   | 24 | 12
         "digraph25.txt"                  | 18   | 1  | 0
         "digraph25.txt"                  | 22   | 19 | 0
+        "digraph25.txt"                  | 13   | 6  | 0
         "digraph1.txt"                   | 3    | 11 | 1
         "digraph1.txt"                   | 9    | 12 | 5
         "digraph1.txt"                   | 7    | 2  | 0

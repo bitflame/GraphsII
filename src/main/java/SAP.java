@@ -179,8 +179,8 @@ public class SAP {
         Node previousFromNode;
         Node previousToNode;
         while (stop == false) {
-            previousToNode=minTNode;
-            previousFromNode=minFNode;
+            previousToNode = minTNode;
+            previousFromNode = minFNode;
             for (int i : digraph.adj(minFNode.id)) {
                 if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
                     newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
@@ -215,10 +215,17 @@ public class SAP {
                     return shortPath;
                 }
                 onStack[minTNode.id] = true;
-            }
-            if (minFNode==previousFromNode && minTNode== previousToNode) break;
+            }/* if the nodes do not change don't stay in the loop. Reasons are either the queues are empty or there are
+            no more adjacent nodes or both */
+            if (minFNode == previousFromNode && minTNode == previousToNode) break;
         }
         return shortPath;
+    }
+
+    public List<Integer> getPathTwo(int from, int to) {
+        /* try useing deluxBFS.pathTo() to 'to' and 'from' add the nodes to the prioriyt queues, then take one from each
+        and see if they intersect this seems to be implied in the comments */
+        return shortPath;// for now
     }
 
     private List<Integer> extractPath(Node minF, Node minT, int match) {

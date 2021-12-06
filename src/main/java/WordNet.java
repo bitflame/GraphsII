@@ -7,10 +7,10 @@ public class WordNet {
         In in = new In(synsets);
         int index;
         String synset;
+        System.out.printf("Index------Synset\n");
         while (in.hasNextLine()) {
             String[] a = in.readLine().split(",");
             index = Integer.parseInt(a[0]);
-            System.out.printf("Index------Synsets\n");
             System.out.print("   "+index+"         ");
             synset = a[1];
             String[] syns = synset.split(" ");
