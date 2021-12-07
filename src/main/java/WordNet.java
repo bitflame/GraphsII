@@ -5,7 +5,7 @@ public class WordNet {
     BST<Integer, Bag<String>> ST;
     int size;
     boolean hasCycle = false;
-
+boolean connected = false;
     // constructor takes the name of two input files
     public WordNet(String synsets, String hypernyms) {
         createDb(synsets);
@@ -26,9 +26,7 @@ public class WordNet {
             for (String s : syns) {
                 nouns.enqueue(s);
                 if (ST.contains(index)) {
-                    Bag b = ST.get(index);
-                    b.add(s);
-                    ST.put(index, b);
+                    ST.get(index).add(s);
                 } else {
                     Bag b = new Bag();
                     b.add(s);
@@ -46,7 +44,7 @@ public class WordNet {
         int index = 0;
         while (in.hasNextLine()) {
             String[] a = in.readLine().split(",");
-            // index is the id
+            if (a.length > 2) throw new IllegalArgumentException("each vertex should have one root or parent");
             for (int i = 0; i < a.length - 1; i++) {
                 digraph.addEdge(Integer.parseInt(a[i]), Integer.parseInt(a[i + 1]));
             }
@@ -56,6 +54,23 @@ public class WordNet {
             hasCycle = true;
             return;
         }
+        /* there has to be at least one vertex that has a path to every other vertex to be a rooted DAG. I need to
+        * test this code below and make sure it is triggered and works for testing a graph for connectivity. As of now
+        * it seems like the digraph class does some checking to make sure the input is valid so I am not sure if I need
+        * this or even it does what I want it to.*/
+        for (int i = 1; i <= digraph.V(); i++) {
+            DeluxBFS deluxBFS = new DeluxBFS(digraph, i);
+            for (int v = 0; v < digraph.V(); v++) {
+                for (int j:digraph.adj(v)) {
+                    if (deluxBFS.hasPathTo(j)) connected=true;
+                    else {
+                        connected=false;
+                        continue;
+                    }
+                }
+            }
+        }
+
     }
 
     // returns all WordNet nouns
