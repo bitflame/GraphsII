@@ -1,12 +1,16 @@
-import edu.princeton.cs.algs4.*;
+import edu.princeton.cs.algs4.BST;
+import edu.princeton.cs.algs4.Digraph;
+import edu.princeton.cs.algs4.DirectedCycle;
+import edu.princeton.cs.algs4.In;
 
 public class WordNet {
-    Queue<String> nouns;
     BST<String, Integer> st;
     private String[] keys;
-    int size=0;  // number of nouns
+    int size = 0;  // number of nouns
     boolean hasCycle = false;
     boolean rooted = true;
+    Digraph digraph;
+    SAP sap;
 
     // constructor takes the name of two input files
     public WordNet(String synsets, String hypernyms) {
@@ -16,8 +20,7 @@ public class WordNet {
 
     private void createDb(String synsets) {
         In in = new In(synsets);
-        int val;
-        nouns = new Queue<>();
+        int val;// check to make sure both nouns point to the same id for synsets with more than one noun
         st = new BST<>();
         while (in.hasNextLine()) {
             size++;
@@ -25,15 +28,14 @@ public class WordNet {
             val = Integer.parseInt(a[0]);
             String[] syns = a[1].split(" ");
             for (String key : syns) {
-                nouns.enqueue(key);
-                st.put(key,val);
+                st.put(key, val);
             }
         }
     }
 
     private void createGraph(String hypernyms) {
         In in = new In(hypernyms);
-        Digraph digraph = new Digraph(size);
+        digraph = new Digraph(size);
         int index = 0;
         while (in.hasNextLine()) {
             index++;
@@ -45,34 +47,36 @@ public class WordNet {
         DirectedCycle cycleFinder = new DirectedCycle(digraph);
         if (cycleFinder.hasCycle()) {
             hasCycle = true;
-            throw new IllegalArgumentException("The input to the constructor does not correspond to a rooted DAG");
+            throw new IllegalArgumentException("The input to the constructor does not correspond to a rooted DAG - cycle detected");
         }
-        if (index >= size) {
+        if (Math.abs(index - size) > 1) {
             rooted = false;
-            throw new IllegalArgumentException("The input to the constructor does not correspond to a rooted DAG");
+            throw new IllegalArgumentException("The input to the constructor does not correspond to a rooted DAG - Graph Not rooted");
         }
     }
 
     // returns all WordNet nouns
     public Iterable<String> nouns() {
-        return nouns;
+        return st.keys();
     }
 
     // is the word a WordNet noun?
     public boolean isNoun(String word) {
-        return st.get(word)!=null;
+        return st.get(word) != null;
     }
 
     // distance between nounA and nounB (defined below )
     public int distance(String nounA, String nounB) {
-
-        return -1; // for now
+        return sap.length(st.get(nounA), st.get(nounB));
     }
 
     /* a synset (second field of synsets.txt) that is the common ancestor of nounA and nounB in a shortest ancestral
      * path (defined below) */
     public String sap(String nounA, String nounB) {
-        return "";// for now
+        for (String s : st.keys()) {
+            if (s.equals(sap.ancestor(st.get(nounA), st.get(nounB)))) return s;
+        }
+        return null;
     }
 
     // do unit testing here
