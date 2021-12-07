@@ -5,7 +5,8 @@ public class WordNet {
     BST<Integer, Bag<String>> ST;
     int size;
     boolean hasCycle = false;
-boolean connected = false;
+    boolean connected = true;
+
     // constructor takes the name of two input files
     public WordNet(String synsets, String hypernyms) {
         createDb(synsets);
@@ -54,25 +55,22 @@ boolean connected = false;
             hasCycle = true;
             return;
         }
-        /* there has to be at least one vertex that has a path to every other vertex to be a rooted DAG. I need to
-        * test this code below and make sure it is triggered and works for testing a graph for connectivity. As of now
-        * it seems like the digraph class does some checking to make sure the input is valid so I am not sure if I need
-        * this or even it does what I want it to.*/
-        for (int i = 1; i <= digraph.V(); i++) {
+        if (!isConnected(digraph)) throw new IllegalArgumentException("The input data is not for a connected graph");
+    }
+    private boolean isConnected(Digraph digraph) {
+
+        for (int i = 0; i < digraph.V(); i++) {
             DeluxBFS deluxBFS = new DeluxBFS(digraph, i);
             for (int v = 0; v < digraph.V(); v++) {
-                for (int j:digraph.adj(v)) {
-                    if (deluxBFS.hasPathTo(j)) connected=true;
-                    else {
-                        connected=false;
-                        continue;
-                    }
+                connected=true;
+                for (int j : digraph.adj(v)) {
+                    if (!deluxBFS.hasPathTo(j)) connected = false;
                 }
+                if (connected==true) break;
             }
         }
-
+        return connected;
     }
-
     // returns all WordNet nouns
     public Iterable<String> nouns() {
         return nouns;
@@ -101,6 +99,7 @@ boolean connected = false;
 
     // do unit testing here
     public static void main(String[] args) {
+        System.out.println("using " + args[0] + "and " + args[1] + "files for this round.");
         WordNet wordNet = new WordNet(args[0], args[1]);
     }
 }

@@ -65,18 +65,6 @@ public class DeluxBFS {
                 }
             }
         }
-        /*System.out.println("\nHere is the what is in edgeTo: ");
-        for (int i : edgeTo) {
-            System.out.print(i + " ");
-        }
-        System.out.println("\nHere is the what is in distTo: ");
-        for (int i : distTo) {
-            System.out.print(" " + i);
-        }
-        System.out.println("\nHere is what is marked i.e. has a path ");
-        for (boolean i : marked) {
-            System.out.print(" " + i);
-        }*/
     }
     public boolean hasPathTo(int v) {
         validateVertex(v);

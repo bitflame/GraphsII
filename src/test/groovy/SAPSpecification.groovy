@@ -1,4 +1,5 @@
 import edu.princeton.cs.algs4.Digraph
+import edu.princeton.cs.algs4.DirectedCycle
 import edu.princeton.cs.algs4.In
 import spock.lang.Specification
 
@@ -141,5 +142,43 @@ class SAPSpecification extends Specification {
         sap.length(iter_one, iter_two);
         then:
         thrown(IllegalArgumentException)
+    }
+
+    def "should identify input for graphs that are not rooted DAGs"() {
+        when:
+        Connected connected = new Connected()
+        Digraph digraph = connected.createGraph(file, size)
+        then:
+        connected.isItConnected(digraph) == result
+        where:
+        file                              | size | result
+        "hypernyms3InvalidCycle.txt"      | 3    | true
+        "hypernyms6InvalidCycle+Path.txt" | 6    | false
+        "hypernyms6InvalidCycle.txt"      | 6    | true
+    }
+
+    def "isRooted() should work"() {
+        when:
+        Connected connected = new Connected()
+        Digraph digraph = connected.createGraph(file, size)
+        then:
+        connected.isRooted(digraph) == result
+        where:
+        file                            | size | result
+        "hypernyms3InvalidTwoRoots.txt" | 3    | false
+    }
+
+    def "should spot cycles in files"() {
+        when:
+        Connected connected = new Connected();
+        Digraph digraph = connected.createGraph(file, size)
+        DirectedCycle cycleFinder = new DirectedCycle(digraph)
+        then:
+        cycleFinder.hasCycle() == result
+        where:
+        file                              | size | result
+        "hypernyms3InvalidCycle.txt"      | 3    | true
+        "hypernyms6InvalidCycle+Path.txt" | 6    | false
+        "hypernyms6InvalidCycle.txt"      | 6    | true
     }
 }
