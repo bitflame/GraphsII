@@ -2,10 +2,11 @@ import edu.princeton.cs.algs4.*;
 
 public class WordNet {
     Queue<String> nouns;
-    BST<Integer, Bag<String>> ST;
-    int size;
+    BST<String, Integer> st;
+    private String[] keys;
+    int size=0;  // number of nouns
     boolean hasCycle = false;
-    boolean connected = true;
+    boolean rooted = true;
 
     // constructor takes the name of two input files
     public WordNet(String synsets, String hypernyms) {
@@ -15,37 +16,28 @@ public class WordNet {
 
     private void createDb(String synsets) {
         In in = new In(synsets);
-        int index = 0;
-        String synset;
+        int val;
         nouns = new Queue<>();
-        ST = new BST<>();
+        st = new BST<>();
         while (in.hasNextLine()) {
+            size++;
             String[] a = in.readLine().split(",");
-            index = Integer.parseInt(a[0]);
-            synset = a[1];
-            String[] syns = synset.split(" ");
-            for (String s : syns) {
-                nouns.enqueue(s);
-                if (ST.contains(index)) {
-                    ST.get(index).add(s);
-                } else {
-                    Bag b = new Bag();
-                    b.add(s);
-                    ST.put(index, b);
-                }
+            val = Integer.parseInt(a[0]);
+            String[] syns = a[1].split(" ");
+            for (String key : syns) {
+                nouns.enqueue(key);
+                st.put(key,val);
             }
         }
-        size = ST.size();
     }
 
     private void createGraph(String hypernyms) {
         In in = new In(hypernyms);
-        Digraph digraph = new Digraph(size);/* assuming the number of ids are the same in synsets and hypernyms and I
-        believe it is the number of vertices in the graph */
+        Digraph digraph = new Digraph(size);
         int index = 0;
         while (in.hasNextLine()) {
+            index++;
             String[] a = in.readLine().split(",");
-            if (a.length > 2) throw new IllegalArgumentException("each vertex should have one root or parent");
             for (int i = 0; i < a.length - 1; i++) {
                 digraph.addEdge(Integer.parseInt(a[i]), Integer.parseInt(a[i + 1]));
             }
@@ -53,24 +45,14 @@ public class WordNet {
         DirectedCycle cycleFinder = new DirectedCycle(digraph);
         if (cycleFinder.hasCycle()) {
             hasCycle = true;
-            return;
+            throw new IllegalArgumentException("The input to the constructor does not correspond to a rooted DAG");
         }
-        if (!isConnected(digraph)) throw new IllegalArgumentException("The input data is not for a connected graph");
+        if (index >= size) {
+            rooted = false;
+            throw new IllegalArgumentException("The input to the constructor does not correspond to a rooted DAG");
+        }
     }
-    private boolean isConnected(Digraph digraph) {
 
-        for (int i = 0; i < digraph.V(); i++) {
-            DeluxBFS deluxBFS = new DeluxBFS(digraph, i);
-            for (int v = 0; v < digraph.V(); v++) {
-                connected=true;
-                for (int j : digraph.adj(v)) {
-                    if (!deluxBFS.hasPathTo(j)) connected = false;
-                }
-                if (connected==true) break;
-            }
-        }
-        return connected;
-    }
     // returns all WordNet nouns
     public Iterable<String> nouns() {
         return nouns;
@@ -78,16 +60,12 @@ public class WordNet {
 
     // is the word a WordNet noun?
     public boolean isNoun(String word) {
-        for (int i : ST.keys()) {
-            for (String s : ST.get(i)) {
-                if (s.equals(word)) return true;
-            }
-        }
-        return false;
+        return st.get(word)!=null;
     }
 
     // distance between nounA and nounB (defined below )
     public int distance(String nounA, String nounB) {
+
         return -1; // for now
     }
 
