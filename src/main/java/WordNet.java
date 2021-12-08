@@ -5,7 +5,7 @@ import edu.princeton.cs.algs4.In;
 
 public class WordNet {
     BST<String, Integer> st;
-    private String[] keys;
+    private String[] key; //
     int size = 0;  // number of nouns
     boolean hasCycle = false;
     boolean rooted = true;
@@ -20,16 +20,17 @@ public class WordNet {
 
     private void createDb(String synsets) {
         In in = new In(synsets);
-        int val;// check to make sure both nouns point to the same id for synsets with more than one noun
+        int val;
         st = new BST<>();
+
         while (in.hasNextLine()) {
-            size++;
             String[] a = in.readLine().split(",");
             val = Integer.parseInt(a[0]);
-            String[] syns = a[1].split(" ");
-            for (String key : syns) {
-                st.put(key, val);
-            }
+            //String[] syns = a[1].split(" ");
+            //for (String key : syns) {
+                st.put(a[1], val);
+            //}
+            size++;
         }
     }
 
@@ -81,7 +82,7 @@ public class WordNet {
 
     // do unit testing here
     public static void main(String[] args) {
-        System.out.println("using " + args[0] + "and " + args[1] + "files for this round.");
+        System.out.println("using " + args[0] + " and " + args[1] + "files for this round.");
         WordNet wordNet = new WordNet(args[0], args[1]);
     }
 }
