@@ -1,11 +1,13 @@
 import edu.princeton.cs.algs4.*;
 
+import java.util.ArrayList;
+
 public class DeluxBFS {
     private static final int INFINITY = Integer.MAX_VALUE;
     private boolean[] marked;
     private int[] edgeTo;
     private int[] distTo;
-
+    private boolean undirected = false;
 
     public DeluxBFS(Digraph G, int s) {
         marked = new boolean[G.V()];
@@ -27,6 +29,34 @@ public class DeluxBFS {
             distTo[v] = INFINITY;
         validateVertices(sources);
         bfs(G, sources);
+    }
+
+    public DeluxBFS(Digraph G, int s, boolean undirected) {
+        marked = new boolean[G.V()];
+        distTo = new int[G.V()];
+        edgeTo = new int[G.V()];
+        this.undirected = undirected;
+        for (int v = 0; v < G.V(); v++)
+            distTo[v] = INFINITY;
+        validateVertex(s);
+        bfs(G, s, undirected);
+    }
+
+    private void bfs(Digraph G, int s, boolean undirected) {
+        if (undirected == false) bfs(G, s);
+        Queue<Integer> q = new Queue<>();
+        marked[s]=true;
+        distTo[s]=0;
+        while(!q.isEmpty()){
+            int v = q.dequeue();
+            for (int w: G.adj(v)){
+                edgeTo[w]=v;
+                edgeTo[v]=w;
+                distTo[w]=distTo[v]+1;
+                marked[w]=true;
+                q.enqueue(w);
+            }
+        }
     }
 
     private void bfs(Digraph G, int s) {
@@ -66,6 +96,7 @@ public class DeluxBFS {
             }
         }
     }
+
     public boolean hasPathTo(int v) {
         validateVertex(v);
         return marked[v];
@@ -75,7 +106,13 @@ public class DeluxBFS {
         validateVertex(v);
         return distTo[v];
     }
-
+public Iterable<Integer> undirectedPathTo(int v){
+        validateVertex(v);
+        this.undirected=true;
+        return new ArrayList<>();/*todo - finish it by deciding if you want to pass the undirected flag to constructor or set
+        it here, and run bfs again, or both. Since you will need to cache the digraph, it might be better to call bfs
+        again with the cached digraph */
+}
     public Iterable<Integer> pathTo(int v) {
         validateVertex(v);
         if (!hasPathTo(v)) return null;
@@ -86,7 +123,6 @@ public class DeluxBFS {
         path.push(x);
         return path;
     }
-
 
     private void validateVertex(int v) {
         int V = marked.length;
@@ -126,7 +162,7 @@ public class DeluxBFS {
                 }
                 StdOut.println();
             } else {
-                StdOut.printf("%d to %d (-): not connected ", s, v);
+                StdOut.printf("%d to %d (-): not connected \n", s, v);
             }
         }
     }

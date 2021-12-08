@@ -74,15 +74,28 @@ public class WordNet {
     public int distance(String nounA, String nounB) {
         int idOfA = -1;
         int idOfB = -1;
+        /*
+        while (idOfA != idOfB && st.keys().iterator().hasNext()){
+            String s = st.get(st.keys().iterator().next());
+            if (s.equals(nounA)) idOfA=
+        }
+        I need to find the id that matches worm with bird
+        */
         for (int i : st.keys()) {
-            if (st.get(i).equals(nounA)) idOfA = i;
-            for (String s : st.get(i).split(" ")) {
-                if (s.equals(nounA)) idOfA = i;
+            if (st.get(i).equals(nounA)) {
+                idOfA = i;
+            } else {
+                for (String s : st.get(i).split(" ")) {
+                    if (s.equals(nounA)) idOfA = i;
+                }
             }
             if (st.get(i).equals(nounB)) idOfB = i;
-            for (String s : st.get(i).split(" ")) {
-                if (s.equals(nounB)) idOfB = i;
+            else {
+                for (String s : st.get(i).split(" ")) {
+                    if (s.equals(nounB)) idOfB = i;
+                }
             }
+            if (idOfA == idOfB) break;
         }
         if (idOfA >= 0 && idOfB >= 0) {
             SAP sap = new SAP(digraph);
@@ -99,12 +112,16 @@ public class WordNet {
         int idOfB = -1;
         for (int i : st.keys()) {
             if (st.get(i).equals(nounA)) idOfA = i;
-            for (String s : st.get(i).split(" ")) {
-                if (s.equals(nounA)) idOfA = i;
+            else {
+                for (String s : st.get(i).split(" ")) {
+                    if (s.equals(nounA)) idOfA = i;
+                }
             }
             if (st.get(i).equals(nounB)) idOfB = i;
-            for (String s : st.get(i).split(" ")) {
-                if (s.equals(nounB)) idOfB = i;
+            else {
+                for (String s : st.get(i).split(" ")) {
+                    if (s.equals(nounB)) idOfB = i;
+                }
             }
         }
         if (idOfA >= 0 && idOfB >= 0) {
