@@ -224,6 +224,22 @@ public class SAP {
 
     public List<Integer> getPathTwo(int from, int to) {
         onStack = new boolean[digraph.V()];
+        if (to < 0 || to >= digraph.V())
+            throw new IllegalArgumentException("vertex " + to + " is not between 0 and " + (digraph.V() - 1));
+        if (from < 0 || from >= digraph.V())
+            throw new IllegalArgumentException("vertex " + from + " is not between 0 and " + (digraph.V() - 1));
+        if ((from == this.from || from == this.to) && (to == this.to || to == this.from)) return shortPath;
+        if (from == to) {
+            shortPath = new ArrayList<>();
+            shortPath.add(from);
+            ancestor = from;
+            return shortPath;
+        }
+        if ((digraph.outdegree(to) == 0 && digraph.indegree(to) == 0) || (digraph.outdegree(from) == 0 &&
+                digraph.indegree(from) == 0)) return null;
+        shortPath = new ArrayList<>();
+        this.from = from;
+        this.to = to;
         MinPQ<Node> fromQueue = new MinPQ<Node>(new Comparator<Node>() {
             @Override
             public int compare(Node o1, Node o2) {
@@ -255,6 +271,7 @@ public class SAP {
         onStack[minFNode.id] = true;
         Node minTNode = toQueue.delMin();
         onStack[minTNode.id] = true;
+        Node newNode;
         /* add 'from' and 'to' to the Priority Queue, add their adjacency, and add any nodes with Indegree of 0, */
         for (int v = 0; v < digraph.V(); v++) {
             if (digraph.indegree(v) == 0) {
@@ -263,18 +280,91 @@ public class SAP {
                     Node node = new Node(i, null, 0, sourcesBFS.distTo(to));
                     Node connectedNode;
                     if (sourcesBFS.hasPathTo(i)) for (int j : sourcesBFS.pathTo(i)) {
-                        if (j == i) {
-                            fromQueue.insert(node);
-                        }
-                        if (j != i && sourcesBFS.hasPathTo(from)) {
-                            connectedNode = new Node(j, node, sourcesBFS.distTo(from), sourcesBFS.distTo(to));
+                        if (j==from){
+                            connectedNode = new Node(j, fromNode, sourcesBFS.distTo(from), sourcesBFS.distTo(to));
                             fromQueue.insert(connectedNode);
+                        }
+                       else if (j==to){
+                            connectedNode = new Node(j, toNode, sourcesBFS.distTo(from), sourcesBFS.distTo(to));
+                            toQueue.insert(connectedNode);
                         }
                     }
                 }
             }
         }
+        for (int i : digraph.adj(minFNode.id)) {
+            newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
+            fromQueue.insert(newNode);
+        }
+        if (!fromQueue.isEmpty()) {
+            minFNode = fromQueue.delMin();
+            if (onStack[minFNode.id]) {
+                shortPath = extractPath(minFNode, minTNode, minFNode.id);
+                Collections.sort(shortPath);
+                return shortPath;
+            }
+            onStack[minFNode.id] = true;
+        }
 
+        /* populate ToQueue */
+        for (int i : digraph.adj(minTNode.id)) {
+            if (i != to) {
+                newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
+                toQueue.insert(newNode);
+            }
+        }
+        if (!toQueue.isEmpty()) {
+            minTNode = toQueue.delMin();
+            if (onStack[minTNode.id]) {
+                shortPath = extractPath(minFNode, minTNode, minTNode.id);
+                Collections.sort(shortPath);
+                return shortPath;
+            }
+            onStack[minTNode.id] = true;
+        }
+        Node previousFromNode;
+        Node previousToNode;
+        while (stop == false) {
+            previousToNode = minTNode;
+            previousFromNode = minFNode;
+            for (int i : digraph.adj(minFNode.id)) {
+                if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
+                    newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
+                    fromQueue.insert(newNode);
+                }
+            }
+            if (!fromQueue.isEmpty()) {
+                minFNode = fromQueue.delMin();
+                if (onStack[minFNode.id]) {
+                    while (minTNode.id != minFNode.id) minTNode = minTNode.prevNode;
+                    stop = true;
+                    shortPath = extractPath(minFNode, minTNode, minFNode.id);
+                    Collections.sort(shortPath);
+                    return shortPath;
+                }
+                onStack[minFNode.id] = true;
+            }
+
+            for (int i : digraph.adj(minTNode.id)) {
+                if (i != minTNode.prevNode.id) {
+                    newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
+                    toQueue.insert(newNode);
+                }
+            }
+            if (!toQueue.isEmpty()) {
+                minTNode = toQueue.delMin();
+                if (onStack[minTNode.id]) {
+                    while (minTNode.id != minFNode.id) minFNode = minFNode.prevNode;
+                    stop = true;
+                    shortPath = extractPath(minFNode, minTNode, minTNode.id);
+                    Collections.sort(shortPath);
+                    return shortPath;
+                }
+                onStack[minTNode.id] = true;
+            }/* if the nodes do not change don't stay in the loop. Reasons are either the queues are empty or there are
+            no more adjacent nodes or both */
+            if (minFNode == previousFromNode && minTNode == previousToNode) break;
+        }
         return shortPath;// for now
     }
 
