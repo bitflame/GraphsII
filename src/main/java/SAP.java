@@ -1,7 +1,4 @@
-import edu.princeton.cs.algs4.Digraph;
-import edu.princeton.cs.algs4.DirectedCycle;
-import edu.princeton.cs.algs4.In;
-import edu.princeton.cs.algs4.MinPQ;
+import edu.princeton.cs.algs4.*;
 
 import java.io.File;
 import java.util.*;
@@ -223,8 +220,8 @@ public class SAP {
     }
 
     public List<Integer> getPathTwo(int from, int to) {
-        /* try useing deluxBFS.pathTo() to 'to' and 'from' add the nodes to the prioriyt queues, then take one from each
-        and see if they intersect this seems to be implied in the comments */
+        /* Do a BFS for each node of graph and build an undirected adjacency table. or an undirected edgeTo array, and
+        * use it to get the shortest path */
         return shortPath;// for now
     }
 
@@ -249,8 +246,7 @@ public class SAP {
     }
 
     public static void main(String[] args) {
-        /*Digraph digraph = new Digraph(new In(new File("src/main/resources/digraph-ambiguous-ancestor.txt")));
-        SAP sap = new SAP(digraph);
+        /*
         System.out.println(sap.ancestor(1, 2));
         System.out.println(sap.ancestor(0, 2));
         System.out.println(sap.ancestor(0, 1));
@@ -265,8 +261,11 @@ public class SAP {
         sap = new SAP(digraph);
         System.out.println("Here is result of 1 and 6: " + sap.ancestor(1, 6));*/
         /* Reading in digraph25.txt here */
-        Digraph digraph = new Digraph(new In(args[0]));
+        Digraph digraph = new Digraph(new In(new File("src/main/resources/digraph-ambiguous-ancestor.txt")));
         SAP sap = new SAP(digraph);
+        sap.getPathTwo(9, 5);
+        digraph = new Digraph(new In(args[0]));
+        sap = new SAP(digraph);
         System.out.print("The path between 2 and 0 should be: [ 0 2 ] ");
         System.out.print("[");
         for (int i : sap.getPath(2, 0)) {
