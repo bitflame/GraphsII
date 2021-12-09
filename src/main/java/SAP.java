@@ -1,4 +1,7 @@
-import edu.princeton.cs.algs4.*;
+import edu.princeton.cs.algs4.Digraph;
+import edu.princeton.cs.algs4.DirectedCycle;
+import edu.princeton.cs.algs4.In;
+import edu.princeton.cs.algs4.MinPQ;
 
 import java.io.File;
 import java.util.*;
@@ -220,8 +223,58 @@ public class SAP {
     }
 
     public List<Integer> getPathTwo(int from, int to) {
-        /* Do a BFS for each node of graph and build an undirected adjacency table. or an undirected edgeTo array, and
-        * use it to get the shortest path */
+        onStack = new boolean[digraph.V()];
+        MinPQ<Node> fromQueue = new MinPQ<Node>(new Comparator<Node>() {
+            @Override
+            public int compare(Node o1, Node o2) {
+                // number of moves the parent has made plus 1 plus the number moves I have to take from where I am
+                if (o1.prevNode.movesTaken + 1 + o1.movesRemaining > o2.prevNode.movesTaken + 1 + o2.movesRemaining)
+                    return 1;
+                else if (o2.prevNode.movesTaken + 1 + o2.movesRemaining > o1.prevNode.movesTaken + 1 + o1.movesRemaining)
+                    return -1;
+                return 0;
+            }
+        });
+        MinPQ<Node> toQueue = new MinPQ<>(new Comparator<Node>() {
+            @Override
+            public int compare(Node o1, Node o2) {
+                if (o1.prevNode.movesTaken + 1 + o1.movesRemaining > o2.prevNode.movesTaken + 1 + o2.movesRemaining)
+                    return 1;
+                else if (o2.prevNode.movesTaken + 1 + o2.movesRemaining > o1.prevNode.movesTaken + 1 + o1.movesRemaining)
+                    return -1;
+                return 0;
+            }
+        });
+        DeluxBFS tDBS = new DeluxBFS(digraph, to);
+        DeluxBFS fDBS = new DeluxBFS(digraph, from);
+        Node fromNode = new Node(from, null, 0, tDBS.distTo(from));
+        fromQueue.insert(fromNode);
+        Node toNode = new Node(to, null, 0, fDBS.distTo(to));
+        toQueue.insert(toNode);
+        Node minFNode = fromQueue.delMin();
+        onStack[minFNode.id] = true;
+        Node minTNode = toQueue.delMin();
+        onStack[minTNode.id] = true;
+        /* add 'from' and 'to' to the Priority Queue, add their adjacency, and add any nodes with Indegree of 0, */
+        for (int v = 0; v < digraph.V(); v++) {
+            if (digraph.indegree(v) == 0) {
+                DeluxBFS sourcesBFS = new DeluxBFS(digraph, v);
+                for (int i = 0; i < digraph.V(); i++) {
+                    Node node = new Node(i, null, 0, sourcesBFS.distTo(to));
+                    Node connectedNode;
+                    if (sourcesBFS.hasPathTo(i)) for (int j : sourcesBFS.pathTo(i)) {
+                        if (j == i) {
+                            fromQueue.insert(node);
+                        }
+                        if (j != i && sourcesBFS.hasPathTo(from)) {
+                            connectedNode = new Node(j, node, sourcesBFS.distTo(from), sourcesBFS.distTo(to));
+                            fromQueue.insert(connectedNode);
+                        }
+                    }
+                }
+            }
+        }
+
         return shortPath;// for now
     }
 
