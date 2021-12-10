@@ -14,7 +14,11 @@ public class SAP {
     int to;
     List<Integer> shortPath;
     boolean[] onStack;
+    //boolean[] marked;
+    //int[] edgeTo;
+    //int[] distTo;
     boolean stop = false;
+
 
     private class Node {
         private final int id;
@@ -35,6 +39,9 @@ public class SAP {
         if (digraph == null) throw new IllegalArgumentException("Digraph value can not be null");
         DirectedCycle cycleFinder = new DirectedCycle(digraph);
         onStack = new boolean[digraph.V()];
+        //marked = new boolean[digraph.V()];
+        //edgeTo = new int[digraph.V()];
+        //distTo = new int[digraph.V()];
         if (cycleFinder.hasCycle()) {
             hasCycle = true;
             return;
@@ -94,7 +101,7 @@ public class SAP {
         return previousAncestor;
     }
 
-    public List<Integer> getPath(int from, int to) {
+    private List<Integer> getPath(int from, int to) {
         if (to < 0 || to >= digraph.V())
             throw new IllegalArgumentException("vertex " + to + " is not between 0 and " + (digraph.V() - 1));
         if (from < 0 || from >= digraph.V())
@@ -222,151 +229,7 @@ public class SAP {
         return shortPath;
     }
 
-    public List<Integer> getPathTwo(int from, int to) {
-        onStack = new boolean[digraph.V()];
-        if (to < 0 || to >= digraph.V())
-            throw new IllegalArgumentException("vertex " + to + " is not between 0 and " + (digraph.V() - 1));
-        if (from < 0 || from >= digraph.V())
-            throw new IllegalArgumentException("vertex " + from + " is not between 0 and " + (digraph.V() - 1));
-        if ((from == this.from || from == this.to) && (to == this.to || to == this.from)) return shortPath;
-        if (from == to) {
-            shortPath = new ArrayList<>();
-            shortPath.add(from);
-            ancestor = from;
-            return shortPath;
-        }
-        if ((digraph.outdegree(to) == 0 && digraph.indegree(to) == 0) || (digraph.outdegree(from) == 0 &&
-                digraph.indegree(from) == 0)) return null;
-        shortPath = new ArrayList<>();
-        this.from = from;
-        this.to = to;
-        MinPQ<Node> fromQueue = new MinPQ<Node>(new Comparator<Node>() {
-            @Override
-            public int compare(Node o1, Node o2) {
-                // number of moves the parent has made plus 1 plus the number moves I have to take from where I am
-                if (o1.prevNode.movesTaken + 1 + o1.movesRemaining > o2.prevNode.movesTaken + 1 + o2.movesRemaining)
-                    return 1;
-                else if (o2.prevNode.movesTaken + 1 + o2.movesRemaining > o1.prevNode.movesTaken + 1 + o1.movesRemaining)
-                    return -1;
-                return 0;
-            }
-        });
-        MinPQ<Node> toQueue = new MinPQ<>(new Comparator<Node>() {
-            @Override
-            public int compare(Node o1, Node o2) {
-                if (o1.prevNode.movesTaken + 1 + o1.movesRemaining > o2.prevNode.movesTaken + 1 + o2.movesRemaining)
-                    return 1;
-                else if (o2.prevNode.movesTaken + 1 + o2.movesRemaining > o1.prevNode.movesTaken + 1 + o1.movesRemaining)
-                    return -1;
-                return 0;
-            }
-        });
-        DeluxBFS tDBS = new DeluxBFS(digraph, to);
-        DeluxBFS fDBS = new DeluxBFS(digraph, from);
-        Node fromNode = new Node(from, null, 0, tDBS.distTo(from));
-        fromQueue.insert(fromNode);
-        Node toNode = new Node(to, null, 0, fDBS.distTo(to));
-        toQueue.insert(toNode);
-        Node minFNode = fromQueue.delMin();
-        onStack[minFNode.id] = true;
-        Node minTNode = toQueue.delMin();
-        onStack[minTNode.id] = true;
-        Node newNode;
-        /* add 'from' and 'to' to the Priority Queue, add their adjacency, and add any nodes with Indegree of 0, */
-        for (int v = 0; v < digraph.V(); v++) {
-            if (digraph.indegree(v) == 0) {
-                DeluxBFS sourcesBFS = new DeluxBFS(digraph, v);
-                for (int i = 0; i < digraph.V(); i++) {
-                    Node node = new Node(i, null, 0, sourcesBFS.distTo(to));
-                    Node connectedNode;
-                    if (sourcesBFS.hasPathTo(i)) for (int j : sourcesBFS.pathTo(i)) {
-                        if (j==from){
-                            connectedNode = new Node(j, fromNode, sourcesBFS.distTo(from), sourcesBFS.distTo(to));
-                            fromQueue.insert(connectedNode);
-                        }
-                       else if (j==to){
-                            connectedNode = new Node(j, toNode, sourcesBFS.distTo(from), sourcesBFS.distTo(to));
-                            toQueue.insert(connectedNode);
-                        }
-                    }
-                }
-            }
-        }
-        for (int i : digraph.adj(minFNode.id)) {
-            newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
-            fromQueue.insert(newNode);
-        }
-        if (!fromQueue.isEmpty()) {
-            minFNode = fromQueue.delMin();
-            if (onStack[minFNode.id]) {
-                shortPath = extractPath(minFNode, minTNode, minFNode.id);
-                Collections.sort(shortPath);
-                return shortPath;
-            }
-            onStack[minFNode.id] = true;
-        }
 
-        /* populate ToQueue */
-        for (int i : digraph.adj(minTNode.id)) {
-            if (i != to) {
-                newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
-                toQueue.insert(newNode);
-            }
-        }
-        if (!toQueue.isEmpty()) {
-            minTNode = toQueue.delMin();
-            if (onStack[minTNode.id]) {
-                shortPath = extractPath(minFNode, minTNode, minTNode.id);
-                Collections.sort(shortPath);
-                return shortPath;
-            }
-            onStack[minTNode.id] = true;
-        }
-        Node previousFromNode;
-        Node previousToNode;
-        while (stop == false) {
-            previousToNode = minTNode;
-            previousFromNode = minFNode;
-            for (int i : digraph.adj(minFNode.id)) {
-                if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
-                    newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
-                    fromQueue.insert(newNode);
-                }
-            }
-            if (!fromQueue.isEmpty()) {
-                minFNode = fromQueue.delMin();
-                if (onStack[minFNode.id]) {
-                    while (minTNode.id != minFNode.id) minTNode = minTNode.prevNode;
-                    stop = true;
-                    shortPath = extractPath(minFNode, minTNode, minFNode.id);
-                    Collections.sort(shortPath);
-                    return shortPath;
-                }
-                onStack[minFNode.id] = true;
-            }
-
-            for (int i : digraph.adj(minTNode.id)) {
-                if (i != minTNode.prevNode.id) {
-                    newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
-                    toQueue.insert(newNode);
-                }
-            }
-            if (!toQueue.isEmpty()) {
-                minTNode = toQueue.delMin();
-                if (onStack[minTNode.id]) {
-                    while (minTNode.id != minFNode.id) minFNode = minFNode.prevNode;
-                    stop = true;
-                    shortPath = extractPath(minFNode, minTNode, minTNode.id);
-                    Collections.sort(shortPath);
-                    return shortPath;
-                }
-                onStack[minTNode.id] = true;
-            }/* if the nodes do not change don't stay in the loop. Reasons are either the queues are empty or there are
-            no more adjacent nodes or both */
-            if (minFNode == previousFromNode && minTNode == previousToNode) break;
-        }
-        return shortPath;// for now
-    }
 
     private List<Integer> extractPath(Node minF, Node minT, int match) {
         List<Integer> path = new ArrayList<>();
@@ -394,7 +257,9 @@ public class SAP {
         System.out.println(sap.ancestor(0, 2));
         System.out.println(sap.ancestor(0, 1));
         System.out.println(sap.ancestor(0, 10));
-
+Digraph digraph = new Digraph(new In(new File("src/main/resources/digraph-ambiguous-ancestor.txt")));
+        SAP sap = new SAP(digraph);
+        sap.getPathTwo(9, 5);
         sap.ancestor(1, 2);
         sap.ancestor(0, 24);
         [13, 23, 24] | [6, 16, 17] | [3]
@@ -404,11 +269,9 @@ public class SAP {
         sap = new SAP(digraph);
         System.out.println("Here is result of 1 and 6: " + sap.ancestor(1, 6));*/
         /* Reading in digraph25.txt here */
-        Digraph digraph = new Digraph(new In(new File("src/main/resources/digraph-ambiguous-ancestor.txt")));
+
+        Digraph digraph = new Digraph(new In(args[0]));
         SAP sap = new SAP(digraph);
-        sap.getPathTwo(9, 5);
-        digraph = new Digraph(new In(args[0]));
-        sap = new SAP(digraph);
         System.out.print("The path between 2 and 0 should be: [ 0 2 ] ");
         System.out.print("[");
         for (int i : sap.getPath(2, 0)) {

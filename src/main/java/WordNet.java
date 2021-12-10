@@ -1,9 +1,13 @@
 import edu.princeton.cs.algs4.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class WordNet {
     RedBlackBST<Integer, String> st;
     Queue<String> nouns;
-    int size = 0;  // number of nouns
+    int size = 0;  // number of synsets
+    int nounCounter = 0;
     boolean hasCycle = false;
     boolean rooted = true;
     Digraph digraph;
@@ -27,6 +31,7 @@ public class WordNet {
             st.put(val, a[1]);
             for (String noun : syns) {
                 nouns.enqueue(noun);
+                nounCounter++; // this is alot more than 119,188 b/c of redundant nouns
             }
             size++;
         }
@@ -107,30 +112,29 @@ public class WordNet {
     /* a synset (second field of synsets.txt) that is the common ancestor of nounA and nounB in a shortest ancestral
      * path (defined below) */
     public String sap(String nounA, String nounB) {
-        StringBuilder sb = new StringBuilder();
-        int idOfA = -1;
-        int idOfB = -1;
+        List<Integer> idsOfA = new ArrayList<>();
+        List<Integer> idsOfB = new ArrayList<>();
         for (int i : st.keys()) {
-            if (st.get(i).equals(nounA)) idOfA = i;
+            if (st.get(i).equals(nounA)) idsOfA = addToIds(idsOfA, i);
             else {
                 for (String s : st.get(i).split(" ")) {
-                    if (s.equals(nounA)) idOfA = i;
+                    if (s.equals(nounA)) idsOfA = addToIds(idsOfA, i);
                 }
             }
-            if (st.get(i).equals(nounB)) idOfB = i;
+            if (st.get(i).equals(nounB)) idsOfB = addToIds(idsOfB, i);
             else {
                 for (String s : st.get(i).split(" ")) {
-                    if (s.equals(nounB)) idOfB = i;
+                    if (s.equals(nounB)) idsOfB = addToIds(idsOfB, i);
                 }
             }
         }
-        if (idOfA >= 0 && idOfB >= 0) {
-            SAP sap = new SAP(digraph);
-            for (int i : sap.getPath(idOfA, idOfB)) {
-                sb.append(st.get(i));
-            }
-        }
-        return sb.toString();
+        SAP sap = new SAP(digraph);
+        return st.get(sap.ancestor(idsOfA, idsOfB));
+    }
+
+    private List<Integer> addToIds(List<Integer> idList, int id) {
+        if (idList.contains(id)) idList.add(id);
+        return idList;
     }
 
     // do unit testing here
@@ -138,7 +142,7 @@ public class WordNet {
         System.out.println("using " + args[0] + " and " + args[1] + "files for this round.");
         WordNet wordNet = new WordNet(args[0], args[1]);
         System.out.println(wordNet.isNoun("entity"));
-        System.out.println(wordNet.sap("worm", "bird"));
-        System.out.println(wordNet.distance("worm", "bird"));
+        System.out.println("The common ancestor " + wordNet.sap("worm", "bird"));
+        System.out.println("The distance expected between worm and bird is 5, the result: " + wordNet.distance("worm", "bird"));
     }
 }
