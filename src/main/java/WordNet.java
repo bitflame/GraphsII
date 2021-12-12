@@ -142,17 +142,12 @@ public class WordNet {
         return st.get(sap.ancestor(idsOfA, idsOfB));
     }
 
-    private List<Integer> addToIds(List<Integer> idList, int id) {
-        if (idList.contains(id)) idList.add(id);
-        return idList;
-    }
-
     // do unit testing here
     public static void main(String[] args) {
         System.out.println("using " + args[0] + " and " + args[1] + "files for this round.");
         WordNet wordNet = new WordNet(args[0], args[1]);
         System.out.println(wordNet.isNoun("entity"));
-        System.out.println("The common ancestor for worm and bird " + wordNet.sap("worm", "bird"));
+        System.out.println("The common ancestor for worm and bird : " + wordNet.sap("worm", "bird"));
         System.out.println("The distance expected between worm and bird is 5, the result: " + wordNet.distance("worm", "bird"));
     }
 }
