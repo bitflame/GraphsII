@@ -197,7 +197,8 @@ public class SAP {
             if (!fromQueue.isEmpty()) {
                 minFNode = fromQueue.delMin();
                 if (onStack[minFNode.id]) {
-                    while (minTNode.id != minFNode.id) minTNode = minTNode.prevNode;
+                    while (minTNode != null && minFNode != null && minTNode.id != minFNode.id)
+                        minTNode = minTNode.prevNode;
                     stop = true;
                     shortPath = extractPath(minFNode, minTNode, minFNode.id);
                     Collections.sort(shortPath);
@@ -215,7 +216,8 @@ public class SAP {
             if (!toQueue.isEmpty()) {
                 minTNode = toQueue.delMin();
                 if (onStack[minTNode.id]) {
-                    while (minTNode.id != minFNode.id) minFNode = minFNode.prevNode;
+                    while (minFNode != null && minTNode != null && minTNode.id != minFNode.id)
+                        minFNode = minFNode.prevNode;
                     stop = true;
                     shortPath = extractPath(minFNode, minTNode, minTNode.id);
                     Collections.sort(shortPath);
@@ -230,7 +232,6 @@ public class SAP {
     }
 
 
-
     private List<Integer> extractPath(Node minF, Node minT, int match) {
         List<Integer> path = new ArrayList<>();
         ancestor = match; // ancestor should be the first match
@@ -240,7 +241,7 @@ public class SAP {
             }
             minF = minF.prevNode;
         }
-        while (minT.prevNode != null) {
+        while (minT!=null && minT.prevNode != null) {
             if (!path.contains(minT.id)) {
                 path.add(minT.id);
             }

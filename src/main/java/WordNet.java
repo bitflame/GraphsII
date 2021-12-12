@@ -11,8 +11,8 @@ public class WordNet {
     boolean hasCycle = false;
     boolean rooted = true;
     Digraph digraph;
-    // SAP sap; use this when you are ready to improve the performance and other unit tests pass
 
+    // SAP sap; use this when you are ready to improve the performance and other unit tests pass
     // constructor takes the name of two input files
     public WordNet(String synsets, String hypernyms) {
         createDb(synsets);
@@ -24,17 +24,29 @@ public class WordNet {
         int val;
         st = new RedBlackBST<>();
         nouns = new Queue<>();
+        String prevString = null;
         while (in.hasNextLine()) {
             String[] a = in.readLine().split(",");
             val = Integer.parseInt(a[0]);
             String[] syns = a[1].split(" ");
             st.put(val, a[1]);
             for (String noun : syns) {
-                nouns.enqueue(noun);
-                nounCounter++; // this is alot more than 119,188 b/c of redundant nouns
+                // if noun is equal to prevString or part of it, do not add it todo - test to make sure this works
+                if (prevString == null || !prevString.contains(noun)) {
+                    nouns.enqueue(noun);
+                    nounCounter++; // this is a lot more than 119,188 b/c of redundant nouns
+                }
+                prevString = a[1];
             }
             size++;
         }
+        /*StdOut.println("worm ids right after st creation: ");
+        for (int i:st.keys()) {
+            for(String s: st.get(i).split(" ")){
+                if (s.equals("worm")) StdOut.println(i+" ");
+            }
+        }
+        StdOut.println();*/
     }
 
     private void createGraph(String hypernyms) {
@@ -57,6 +69,12 @@ public class WordNet {
             rooted = false;
             throw new IllegalArgumentException("The input to the constructor does not correspond to a rooted DAG - Graph Not rooted");
         }
+        /*StdOut.println("worm ids right after graph creation: ");
+        for (int i:st.keys()) {
+            for(String s: st.get(i).split(" ")){
+                if (s.equals("worm")) StdOut.print(i+" ");
+            }
+        }*/
     }
 
     // returns all WordNet nouns
@@ -114,19 +132,11 @@ public class WordNet {
     public String sap(String nounA, String nounB) {
         List<Integer> idsOfA = new ArrayList<>();
         List<Integer> idsOfB = new ArrayList<>();
-        for (int i : st.keys()) {
-            if (st.get(i).equals(nounA)) idsOfA = addToIds(idsOfA, i);
-            else {
-                for (String s : st.get(i).split(" ")) {
-                    if (s.equals(nounA)) idsOfA = addToIds(idsOfA, i);
-                }
-            }
-            if (st.get(i).equals(nounB)) idsOfB = addToIds(idsOfB, i);
-            else {
-                for (String s : st.get(i).split(" ")) {
-                    if (s.equals(nounB)) idsOfB = addToIds(idsOfB, i);
-                }
-            }
+        for (int k : st.keys()) {
+           for(String s: st.get(k).split(" ")){
+               if (s.equals(nounA)) idsOfA.add(k);
+               if (s.equals(nounB)) idsOfB.add(k);
+           }
         }
         SAP sap = new SAP(digraph);
         return st.get(sap.ancestor(idsOfA, idsOfB));
@@ -142,7 +152,7 @@ public class WordNet {
         System.out.println("using " + args[0] + " and " + args[1] + "files for this round.");
         WordNet wordNet = new WordNet(args[0], args[1]);
         System.out.println(wordNet.isNoun("entity"));
-        System.out.println("The common ancestor " + wordNet.sap("worm", "bird"));
+        System.out.println("The common ancestor for worm and bird " + wordNet.sap("worm", "bird"));
         System.out.println("The distance expected between worm and bird is 5, the result: " + wordNet.distance("worm", "bird"));
     }
 }
