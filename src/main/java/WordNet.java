@@ -95,36 +95,17 @@ public class WordNet {
 
     // distance between nounA and nounB (defined below )
     public int distance(String nounA, String nounB) {
-        int idOfA = -1;
-        int idOfB = -1;
-        /*
-        while (idOfA != idOfB && st.keys().iterator().hasNext()){
-            String s = st.get(st.keys().iterator().next());
-            if (s.equals(nounA)) idOfA=
-        }
-        I need to find the id that matches worm with bird
-        */
-        for (int i : st.keys()) {
-            if (st.get(i).equals(nounA)) {
-                idOfA = i;
-            } else {
-                for (String s : st.get(i).split(" ")) {
-                    if (s.equals(nounA)) idOfA = i;
-                }
+        List<Integer> idsOfA = new ArrayList<>();
+        List<Integer> idsOfB = new ArrayList<>();
+        for (int k : st.keys()) {
+            for (String s : st.get(k).split(" ")) {
+                if (s.equals(nounA)) idsOfA.add(k);
+                if (s.equals(nounB)) idsOfB.add(k);
             }
-            if (st.get(i).equals(nounB)) idOfB = i;
-            else {
-                for (String s : st.get(i).split(" ")) {
-                    if (s.equals(nounB)) idOfB = i;
-                }
-            }
-            if (idOfA == idOfB) break;
         }
-        if (idOfA >= 0 && idOfB >= 0) {
-            SAP sap = new SAP(digraph);
-            return sap.length(idOfA, idOfB);
-        }
-        return -1;// if the nouns are not in the db
+        SAP sap = new SAP(digraph);
+
+        return sap.length(idsOfA, idsOfB);// if the nouns are not in the db
     }
 
     /* a synset (second field of synsets.txt) that is the common ancestor of nounA and nounB in a shortest ancestral
@@ -133,13 +114,19 @@ public class WordNet {
         List<Integer> idsOfA = new ArrayList<>();
         List<Integer> idsOfB = new ArrayList<>();
         for (int k : st.keys()) {
-           for(String s: st.get(k).split(" ")){
-               if (s.equals(nounA)) idsOfA.add(k);
-               if (s.equals(nounB)) idsOfB.add(k);
-           }
+            for (String s : st.get(k).split(" ")) {
+                if (s.equals(nounA)) idsOfA.add(k);
+                if (s.equals(nounB)) idsOfB.add(k);
+            }
         }
         SAP sap = new SAP(digraph);
         return st.get(sap.ancestor(idsOfA, idsOfB));
+    }
+
+    private void testSap(int i, int j) {
+        SAP sap = new SAP(digraph);
+
+        StdOut.println(st.get(sap.ancestor(i, j))  +" with the length of:   "+ sap.length(i, j));
     }
 
     // do unit testing here
@@ -148,6 +135,28 @@ public class WordNet {
         WordNet wordNet = new WordNet(args[0], args[1]);
         System.out.println(wordNet.isNoun("entity"));
         System.out.println("The common ancestor for worm and bird : " + wordNet.sap("worm", "bird"));
-        System.out.println("The distance expected between worm and bird is 5, the result: " + wordNet.distance("worm", "bird"));
+        System.out.println("The distance expected between worm and bird is 5, the result: " +
+                wordNet.distance("worm", "bird"));
+        System.out.println("Testing wordnet ancestor and distance with ids ");
+        wordNet.testSap(81679, 24306);
+        wordNet.testSap(81679, 24307);
+        wordNet.testSap(81679, 25293);
+        wordNet.testSap(81679, 33764);
+        wordNet.testSap(81679, 70067);
+        wordNet.testSap(81680, 24306);
+        wordNet.testSap(81680, 24307);
+        wordNet.testSap(81680, 25293);
+        wordNet.testSap(81680, 33764);
+        wordNet.testSap(81680, 70067);
+        wordNet.testSap(81681, 24306);
+        wordNet.testSap(81681, 24307);
+        wordNet.testSap(81681, 25293);
+        wordNet.testSap(81681, 33764);
+        wordNet.testSap(81681, 70067);
+        wordNet.testSap(81682, 24306);
+        wordNet.testSap(81682, 24307);
+        wordNet.testSap(81682, 25293);
+        wordNet.testSap(81682, 33764);
+        wordNet.testSap(81682, 70067);
     }
 }

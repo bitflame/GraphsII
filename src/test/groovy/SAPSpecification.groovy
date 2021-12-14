@@ -109,6 +109,7 @@ class SAPSpecification extends Specification {
         "digraph-ambiguous-ancestor.txt" | 1    | 2  | 2
         "digraph-ambiguous-ancestor.txt" | 0    | 2  | 2
         "digraph-ambiguous-ancestor.txt" | 0    | 10 | 10
+
     }
 
     def "SAP ancestor() should return a common node between two Integer input values"() {
