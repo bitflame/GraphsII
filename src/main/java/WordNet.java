@@ -125,7 +125,6 @@ public class WordNet {
 
     private void testSap(int i, int j) {
         SAP sap = new SAP(digraph);
-
         StdOut.println(st.get(sap.ancestor(i, j))  +" with the length of:   "+ sap.length(i, j));
     }
 
@@ -137,7 +136,7 @@ public class WordNet {
         System.out.println("The common ancestor for worm and bird : " + wordNet.sap("worm", "bird"));
         System.out.println("The distance expected between worm and bird is 5, the result: " +
                 wordNet.distance("worm", "bird"));
-        System.out.println("Testing wordnet ancestor and distance with ids ");
+        System.out.println("************************* Testing wordnet ancestor and distance with ids *****************");
         wordNet.testSap(81679, 24306);
         wordNet.testSap(81679, 24307);
         wordNet.testSap(81679, 25293);

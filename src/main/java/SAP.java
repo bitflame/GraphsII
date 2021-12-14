@@ -51,7 +51,7 @@ public class SAP {
 
     // length of the shortest ancestral path between v and w; -1 if no such path
     public int length(int v, int w) {
-        if (getPath(v, w) != null) return getPath(v, w).size();
+        if (getPath(v, w) != null) return getPath(v, w).size() - 1;
         else return -1;
     }
 
@@ -59,17 +59,21 @@ public class SAP {
     public int length(Iterable<Integer> v, Iterable<Integer> w) {
         if (v == null || w == null)
             throw new IllegalArgumentException("Iterable value to SAP.length() can not be null.");
-        List<List<Integer>> paths = new ArrayList<>();
-        List<Integer> singlePath = new ArrayList<>();
+        List<Integer> prevShortPath = getPath(v.iterator().next(), w.iterator().next());
+        List<Integer> currShortPath = null;
         for (Integer i : v) {
             if (i == null) throw new IllegalArgumentException("None of the values in subsets to length() can be null.");
             for (Integer j : w) {
                 if (j == null)
                     throw new IllegalArgumentException("None of the values in subsets to length() can be null.");
-                if (getPath(i, j) != null) return getPath(i, j).size();
+                SAP s = new SAP(digraph);
+                currShortPath = s.getPath(i, j);
+                if (prevShortPath.size() > currShortPath.size()) {
+                    prevShortPath = currShortPath;
+                }
             }
         }
-        return -1;
+        return prevShortPath.size()-1;
     }
 
     // a common ancestor of v and w that participates in a shortest ancestral path; -1 if no such path
@@ -85,7 +89,7 @@ public class SAP {
             throw new IllegalArgumentException("Iterable value to SAP.ancestor() can not be null.");
         int currentAncestor = ancestor, previousAncestor = ancestor;
         List<Integer> prevShortPath = getPath(v.iterator().next(), w.iterator().next());
-        previousAncestor = ancestor;
+        previousAncestor = ancestor(v.iterator().next(), w.iterator().next());
         List<Integer> currShortPath = null;
         for (int i : v) {
             for (int j : w) {
@@ -241,7 +245,7 @@ public class SAP {
             }
             minF = minF.prevNode;
         }
-        while (minT!=null && minT.prevNode != null) {
+        while (minT != null && minT.prevNode != null) {
             if (!path.contains(minT.id)) {
                 path.add(minT.id);
             }
@@ -270,9 +274,12 @@ Digraph digraph = new Digraph(new In(new File("src/main/resources/digraph-ambigu
         sap = new SAP(digraph);
         System.out.println("Here is result of 1 and 6: " + sap.ancestor(1, 6));*/
         /* Reading in digraph25.txt here */
-
+        List<Integer> l1 = new ArrayList<>(Arrays.asList(2, 5));
+        List<Integer> l2 = new ArrayList<>(Arrays.asList(0, 6));
         Digraph digraph = new Digraph(new In(args[0]));
         SAP sap = new SAP(digraph);
+        System.out.println("ancestor between l1 and l2 expected to be 0: " + sap.ancestor(l1, l2));
+        System.out.println("The path length for the shortest path should be 1: " + sap.length(l1, l2));
         System.out.print("The path between 2 and 0 should be: [ 0 2 ] ");
         System.out.print("[");
         for (int i : sap.getPath(2, 0)) {
@@ -464,5 +471,6 @@ Digraph digraph = new Digraph(new In(new File("src/main/resources/digraph-ambigu
         digraph = new Digraph(new In(new File("src/main/resources/simplecycle.txt")));
         sap = new SAP(digraph);
         System.out.println("Expecting this to be true for simplecycle.txt: " + sap.hasCycle);
+
     }
 }
