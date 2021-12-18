@@ -135,9 +135,11 @@ public class WordNet {
         SAP sap = new SAP(digraph);
         StdOut.println(st.get(sap.ancestor(i, j))  +" with the length of:   "+ sap.length(i, j));
         StdOut.println("The path for "+i + " and "+j+" is: ");
+        /*
         for (int k:sap.getPath(i,j)) {
             StdOut.print(k+" ");
         }
+        */
     }
 
     // do unit testing here

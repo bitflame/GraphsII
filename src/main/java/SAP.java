@@ -12,9 +12,6 @@ public class SAP {
     int to;
     List<Integer> shortPath;
     boolean[] onStack;
-    //boolean[] marked;
-    //int[] edgeTo;
-    //int[] distTo;
     boolean stop = false;
     private int minDistance = Integer.MAX_VALUE;
 
@@ -211,7 +208,6 @@ public class SAP {
             if (fromBFS.hasPathTo(i)) fromList.add(i);
             if (toBFS.hasPathTo(i)) toList.add(i);
         }
-        int distance;
         List<Integer> path;
         int i = 0, j = 0, counter = 0;
         while (counter < fromList.size() && counter < toList.size()) {
@@ -229,7 +225,7 @@ public class SAP {
                     if (path.contains(k)) ancestor = k;
                     else path.add(k);
                 }
-                StdOut.printf("Updated minDistance, and ancestor. The value of i is: %d The value of minDistance is: %d\n", i,minDistance);
+                //StdOut.printf("Updated minDistance, and ancestor. The value of i is: %d The value of minDistance is: %d\n", i, minDistance);
                 return ancestor;
             }
             counter++;
@@ -241,17 +237,23 @@ public class SAP {
     public int ancestor(Iterable<Integer> v, Iterable<Integer> w) {
         if (v == null || w == null)
             throw new IllegalArgumentException("Iterable value to SAP.ancestor() can not be null.");
-
+        int distance = minDistance;
+        int currentAncestor = ancestor;
         for (int i : v) {
             for (int j : w) {
                 //StdOut.printf("Calling ancestor(%d, %d) ", i, j);
                 ancestor(i, j);
+                if (distance > minDistance) {
+                    distance = minDistance;
+                    currentAncestor = ancestor;
+                }
             }
         }
-        return ancestor;
+        minDistance = distance;
+        return currentAncestor;
     }
 
-    public List<Integer> getPath(int from, int to) {
+    private List<Integer> getPath(int from, int to) {
         if (to < 0 || to >= digraphCopy.V())
             throw new IllegalArgumentException("vertex " + to + " is not between 0 and " + (digraphCopy.V() - 1));
         if (from < 0 || from >= digraphCopy.V())
