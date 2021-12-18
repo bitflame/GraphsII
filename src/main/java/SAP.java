@@ -1,14 +1,12 @@
-import edu.princeton.cs.algs4.Digraph;
-import edu.princeton.cs.algs4.DirectedCycle;
-import edu.princeton.cs.algs4.In;
-import edu.princeton.cs.algs4.MinPQ;
+import edu.princeton.cs.algs4.Stack;
+import edu.princeton.cs.algs4.*;
 
 import java.io.File;
 import java.util.*;
 
 public class SAP {
     boolean hasCycle = false;
-    private Digraph digraph;
+    private Digraph digraphCopy;
     int ancestor = -1;
     int from;
     int to;
@@ -18,7 +16,133 @@ public class SAP {
     //int[] edgeTo;
     //int[] distTo;
     boolean stop = false;
+    private int minDistance = Integer.MAX_VALUE;
 
+    private class DeluxBFS {
+        private static final int INFINITY = Integer.MAX_VALUE;
+        private boolean[] marked;
+        private int[] edgeTo;
+        private int[] distTo;
+
+        public DeluxBFS(Digraph G, int s) {
+            marked = new boolean[G.V()];
+            distTo = new int[G.V()];
+            edgeTo = new int[G.V()];
+
+            for (int v = 0; v < G.V(); v++)
+                distTo[v] = INFINITY;
+            validateVertex(s);
+            bfs(G, s);
+        }
+
+        public DeluxBFS(Digraph G, Iterable<Integer> sources) {
+            marked = new boolean[G.V()];
+            distTo = new int[G.V()];
+            edgeTo = new int[G.V()];
+
+            for (int v = 0; v < G.V(); v++)
+                distTo[v] = INFINITY;
+            validateVertices(sources);
+            bfs(G, sources);
+        }
+
+
+        private void bfs(Digraph G, int s) {
+            edu.princeton.cs.algs4.Queue<Integer> q = new edu.princeton.cs.algs4.Queue<Integer>();
+            marked[s] = true;
+            distTo[s] = 0;
+            q.enqueue(s);
+            while (!q.isEmpty()) {
+                int v = q.dequeue();
+                for (int w : G.adj(v)) {
+                    if (!marked[w]) {
+                        edgeTo[w] = v;
+                        distTo[w] = distTo[v] + 1;
+                        marked[w] = true;
+                        q.enqueue(w);
+                    }
+                }
+            }
+        }
+
+        private void bfs(Digraph G, Iterable<Integer> sources) {
+            edu.princeton.cs.algs4.Queue<Integer> q = new edu.princeton.cs.algs4.Queue<Integer>();
+            for (int s : sources) {
+                marked[s] = true;
+                distTo[s] = 0;
+                q.enqueue(s);
+            }
+            while (!q.isEmpty()) {
+                int v = q.dequeue();
+                for (int w : G.adj(v)) {
+                    if (!marked[w]) {
+                        edgeTo[w] = v;
+                        distTo[w] = distTo[v] + 1;
+                        marked[w] = true;
+                        q.enqueue(w);
+                    }
+                }
+            }
+        /*System.out.println("\nHere is the what is in edgeTo: ");
+        for (int i : edgeTo) {
+            System.out.print(i + " ");
+        }
+        System.out.println("\nHere is the what is in distTo: ");
+        for (int i : distTo) {
+            System.out.print(" " + i);
+        }
+        System.out.println("\nHere is what is marked i.e. has a path ");
+        for (boolean i : marked) {
+            System.out.print(" " + i);
+        }*/
+        }
+
+        public boolean hasPathTo(int v) {
+            validateVertex(v);
+            return marked[v];
+        }
+
+        public int distTo(int v) {
+            validateVertex(v);
+            return distTo[v];
+        }
+
+        public Iterable<Integer> pathTo(int v) {
+            validateVertex(v);
+            if (!hasPathTo(v)) return null;
+            edu.princeton.cs.algs4.Stack<Integer> path = new Stack<Integer>();
+            int x;
+            for (x = v; distTo[x] != 0; x = edgeTo[x])
+                path.push(x);
+            path.push(x);
+            return path;
+        }
+
+
+        private void validateVertex(int v) {
+            int V = marked.length;
+            if (v < 0 || v >= V)
+                throw new IllegalArgumentException("vertex " + v + " is not between 0 and " + (V - 1));
+        }
+
+        private void validateVertices(Iterable<Integer> vertices) {
+            if (vertices == null) {
+                throw new IllegalArgumentException("argument is null");
+            }
+            int V = marked.length;
+            int count = 0;
+            for (Integer v : vertices) {
+                count++;
+                if (v == null) {
+                    throw new IllegalArgumentException("vertex is null");
+                }
+                validateVertex(v);
+            }
+            if (count == 0) {
+                throw new IllegalArgumentException("zero vertices");
+            }
+        }
+    }
 
     private class Node {
         private final int id;
@@ -44,9 +168,8 @@ public class SAP {
         //distTo = new int[digraph.V()];
         if (cycleFinder.hasCycle()) {
             hasCycle = true;
-            return;
         }
-        this.digraph = digraph;
+        this.digraphCopy = digraph;
     }
 
     // length of the shortest ancestral path between v and w; -1 if no such path
@@ -66,20 +189,51 @@ public class SAP {
             for (Integer j : w) {
                 if (j == null)
                     throw new IllegalArgumentException("None of the values in subsets to length() can be null.");
-                SAP s = new SAP(digraph);
+                SAP s = new SAP(digraphCopy);
                 currShortPath = s.getPath(i, j);
                 if (prevShortPath.size() > currShortPath.size()) {
                     prevShortPath = currShortPath;
                 }
             }
         }
-        return prevShortPath.size()-1;
+        return prevShortPath.size() - 1;
     }
 
     // a common ancestor of v and w that participates in a shortest ancestral path; -1 if no such path
     public int ancestor(int v, int w) {
+        //StdOut.printf("from: %d to: %d v: %d w: %d at the beginning of call to ancestor. ", from, to, v, w);
         if ((v == from || v == to) && (w == from || w == to)) return ancestor;
-        if (getPath(v, w) != null) getPath(v, w);
+        DeluxBFS fromBFS = new DeluxBFS(digraphCopy, v);
+        DeluxBFS toBFS = new DeluxBFS(digraphCopy, w);
+        List<Integer> fromList = new ArrayList<>();
+        List<Integer> toList = new ArrayList<>();
+        for (int i = 0; i < digraphCopy.V(); i++) {
+            if (fromBFS.hasPathTo(i)) fromList.add(i);
+            if (toBFS.hasPathTo(i)) toList.add(i);
+        }
+        int distance;
+        List<Integer> path;
+        int i = 0, j = 0, counter = 0;
+        while (counter < fromList.size() && counter < toList.size()) {
+            i = fromList.get(counter);
+            j = toList.get(counter);
+            //StdOut.printf("checking %d and %d :", i, j);
+            if (i == j) {
+                minDistance = fromBFS.distTo(i) + toBFS.distTo(j);
+                ancestor = i;
+                path = new ArrayList<>();
+                for (int k : fromBFS.pathTo(i)) {
+                    path.add(k);
+                }
+                for (int k : toBFS.pathTo(j)) {
+                    if (path.contains(k)) ancestor = k;
+                    else path.add(k);
+                }
+                StdOut.printf("Updated minDistance, and ancestor. The value of i is: %d The value of minDistance is: %d\n", i,minDistance);
+                return ancestor;
+            }
+            counter++;
+        }
         return ancestor;
     }
 
@@ -87,29 +241,21 @@ public class SAP {
     public int ancestor(Iterable<Integer> v, Iterable<Integer> w) {
         if (v == null || w == null)
             throw new IllegalArgumentException("Iterable value to SAP.ancestor() can not be null.");
-        int currentAncestor = ancestor, previousAncestor = ancestor;
-        List<Integer> prevShortPath = getPath(v.iterator().next(), w.iterator().next());
-        previousAncestor = ancestor(v.iterator().next(), w.iterator().next());
-        List<Integer> currShortPath = null;
+
         for (int i : v) {
             for (int j : w) {
-                SAP s = new SAP(digraph);
-                currShortPath = s.getPath(i, j);
-                currentAncestor = s.ancestor;
-                if (prevShortPath.size() > currShortPath.size()) {
-                    previousAncestor = currentAncestor;
-                    prevShortPath = currShortPath;
-                }
+                //StdOut.printf("Calling ancestor(%d, %d) ", i, j);
+                ancestor(i, j);
             }
         }
-        return previousAncestor;
+        return ancestor;
     }
 
-    private List<Integer> getPath(int from, int to) {
-        if (to < 0 || to >= digraph.V())
-            throw new IllegalArgumentException("vertex " + to + " is not between 0 and " + (digraph.V() - 1));
-        if (from < 0 || from >= digraph.V())
-            throw new IllegalArgumentException("vertex " + from + " is not between 0 and " + (digraph.V() - 1));
+    public List<Integer> getPath(int from, int to) {
+        if (to < 0 || to >= digraphCopy.V())
+            throw new IllegalArgumentException("vertex " + to + " is not between 0 and " + (digraphCopy.V() - 1));
+        if (from < 0 || from >= digraphCopy.V())
+            throw new IllegalArgumentException("vertex " + from + " is not between 0 and " + (digraphCopy.V() - 1));
         if ((from == this.from || from == this.to) && (to == this.to || to == this.from)) return shortPath;
         if (from == to) {
             shortPath = new ArrayList<>();
@@ -117,13 +263,13 @@ public class SAP {
             ancestor = from;
             return shortPath;
         }
-        if ((digraph.outdegree(to) == 0 && digraph.indegree(to) == 0) || (digraph.outdegree(from) == 0 &&
-                digraph.indegree(from) == 0)) return null;
+        if ((digraphCopy.outdegree(to) == 0 && digraphCopy.indegree(to) == 0) || (digraphCopy.outdegree(from) == 0 &&
+                digraphCopy.indegree(from) == 0)) return null;
         shortPath = new ArrayList<>();
         this.from = from;
         this.to = to;
-        DeluxBFS fDBS = new DeluxBFS(digraph, from);
-        DeluxBFS tDBS = new DeluxBFS(digraph, to);
+        DeluxBFS fDBS = new DeluxBFS(digraphCopy, from);
+        DeluxBFS tDBS = new DeluxBFS(digraphCopy, to);
         MinPQ<Node> fromQueue = new MinPQ<Node>(new Comparator<Node>() {
             @Override
             public int compare(Node o1, Node o2) {
@@ -157,7 +303,7 @@ public class SAP {
         /* Need to populate fromQueue and toQueue here once b/c grandparent is null, and throws an exception when I check
          * for A*'s problem below . Populate the queues with forward and reverse nodes each time; you can also do this
          * only when there is a cycle */
-        for (int i : digraph.adj(minFNode.id)) {
+        for (int i : digraphCopy.adj(minFNode.id)) {
             newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
             fromQueue.insert(newNode);
         }
@@ -172,7 +318,7 @@ public class SAP {
         }
 
         /* populate ToQueue */
-        for (int i : digraph.adj(minTNode.id)) {
+        for (int i : digraphCopy.adj(minTNode.id)) {
             if (i != to) {
                 newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
                 toQueue.insert(newNode);
@@ -192,7 +338,7 @@ public class SAP {
         while (stop == false) {
             previousToNode = minTNode;
             previousFromNode = minFNode;
-            for (int i : digraph.adj(minFNode.id)) {
+            for (int i : digraphCopy.adj(minFNode.id)) {
                 if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
                     newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
                     fromQueue.insert(newNode);
@@ -211,7 +357,7 @@ public class SAP {
                 onStack[minFNode.id] = true;
             }
 
-            for (int i : digraph.adj(minTNode.id)) {
+            for (int i : digraphCopy.adj(minTNode.id)) {
                 if (i != minTNode.prevNode.id) {
                     newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
                     toQueue.insert(newNode);
@@ -274,10 +420,20 @@ Digraph digraph = new Digraph(new In(new File("src/main/resources/digraph-ambigu
         sap = new SAP(digraph);
         System.out.println("Here is result of 1 and 6: " + sap.ancestor(1, 6));*/
         /* Reading in digraph25.txt here */
-        List<Integer> l1 = new ArrayList<>(Arrays.asList(2, 5));
-        List<Integer> l2 = new ArrayList<>(Arrays.asList(0, 6));
         Digraph digraph = new Digraph(new In(args[0]));
         SAP sap = new SAP(digraph);
+        System.out.print("The path between 1 and 2 should be: [ 1 2 ] ");
+        System.out.print("[");
+        for (int i : sap.getPath(1, 2)) {
+            System.out.print(" " + i + " ");
+        }
+        System.out.println("]");
+
+
+        List<Integer> l1 = new ArrayList<>(Arrays.asList(2, 5));
+        List<Integer> l2 = new ArrayList<>(Arrays.asList(0, 6));
+        digraph = new Digraph(new In(args[0]));
+        sap = new SAP(digraph);
         System.out.println("ancestor between l1 and l2 expected to be 0: " + sap.ancestor(l1, l2));
         System.out.println("The path length for the shortest path should be 1: " + sap.length(l1, l2));
         System.out.print("The path between 2 and 0 should be: [ 0 2 ] ");
@@ -404,6 +560,7 @@ Digraph digraph = new Digraph(new In(new File("src/main/resources/digraph-ambigu
         System.out.println("==========================================================================================");
         System.out.println("The shortest common ancestor in above sets should be 3, and it is: " + sap.ancestor(one, two));
         System.out.println("==========================================================================================");
+
         digraph = new Digraph(new In(new File("src/main/resources/digraph1.txt")));
         sap = new SAP(digraph);
         System.out.print("The path between 10 and 4 should be: [ 4 1 5 10 ] ");
@@ -471,6 +628,8 @@ Digraph digraph = new Digraph(new In(new File("src/main/resources/digraph-ambigu
         digraph = new Digraph(new In(new File("src/main/resources/simplecycle.txt")));
         sap = new SAP(digraph);
         System.out.println("Expecting this to be true for simplecycle.txt: " + sap.hasCycle);
-
+        digraph = new Digraph(new In(new File("synsets.txt")));
+        sap = new SAP(digraph);
+        sap.getPath(81679, 24307);
     }
 }

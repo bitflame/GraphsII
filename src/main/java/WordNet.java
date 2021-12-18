@@ -119,6 +119,14 @@ public class WordNet {
                 if (s.equals(nounB)) idsOfB.add(k);
             }
         }
+        /*StdOut.printf("Here are the ids for first term: \n");
+        for (int i:idsOfA) {
+            System.out.println(" "+i);
+        }
+        StdOut.printf("Here are the ids for the secnd term: \n");
+        for (int i:idsOfB) {
+            System.out.println(" "+i);
+        }*/
         SAP sap = new SAP(digraph);
         return st.get(sap.ancestor(idsOfA, idsOfB));
     }
@@ -126,17 +134,21 @@ public class WordNet {
     private void testSap(int i, int j) {
         SAP sap = new SAP(digraph);
         StdOut.println(st.get(sap.ancestor(i, j))  +" with the length of:   "+ sap.length(i, j));
+        StdOut.println("The path for "+i + " and "+j+" is: ");
+        for (int k:sap.getPath(i,j)) {
+            StdOut.print(k+" ");
+        }
     }
 
     // do unit testing here
     public static void main(String[] args) {
         System.out.println("using " + args[0] + " and " + args[1] + "files for this round.");
         WordNet wordNet = new WordNet(args[0], args[1]);
-        System.out.println(wordNet.isNoun("entity"));
+        //System.out.println(wordNet.isNoun("entity"));
         System.out.println("The common ancestor for worm and bird : " + wordNet.sap("worm", "bird"));
         System.out.println("The distance expected between worm and bird is 5, the result: " +
                 wordNet.distance("worm", "bird"));
-        System.out.println("************************* Testing wordnet ancestor and distance with ids *****************");
+        /* System.out.println("************************* Testing wordnet ancestor and distance with ids *****************");
         wordNet.testSap(81679, 24306);
         wordNet.testSap(81679, 24307);
         wordNet.testSap(81679, 25293);
@@ -156,6 +168,6 @@ public class WordNet {
         wordNet.testSap(81682, 24307);
         wordNet.testSap(81682, 25293);
         wordNet.testSap(81682, 33764);
-        wordNet.testSap(81682, 70067);
+        wordNet.testSap(81682, 70067); */
     }
 }
