@@ -1,5 +1,8 @@
 import edu.princeton.cs.algs4.Stack;
-import edu.princeton.cs.algs4.*;
+import edu.princeton.cs.algs4.Digraph;
+import edu.princeton.cs.algs4.DirectedCycle;
+import edu.princeton.cs.algs4.MinPQ;
+import edu.princeton.cs.algs4.In;
 
 import java.io.File;
 import java.util.*;

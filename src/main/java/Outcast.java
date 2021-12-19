@@ -23,8 +23,14 @@ public class Outcast {
             distances[i]=dist;
             dist=0;
         }
-        Arrays.sort(distances);
-        return nouns[distances[nouns.length]];
+
+        String result = "";
+        int counter = 0;
+        for(String s: nouns){
+            if (distances[counter]>result.length()) result = nouns[counter];
+            counter++;
+        }
+        return result;
     }
 
     public static void main(String[] args) {

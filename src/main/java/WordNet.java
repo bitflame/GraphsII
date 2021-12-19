@@ -1,5 +1,9 @@
-import edu.princeton.cs.algs4.*;
-
+import edu.princeton.cs.algs4.RedBlackBST;
+import edu.princeton.cs.algs4.Queue;
+import edu.princeton.cs.algs4.Digraph;
+import edu.princeton.cs.algs4.In;
+import edu.princeton.cs.algs4.DirectedCycle;
+import edu.princeton.cs.algs4.StdOut;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -146,7 +150,7 @@ public class WordNet {
     public static void main(String[] args) {
         System.out.println("using " + args[0] + " and " + args[1] + "files for this round.");
         WordNet wordNet = new WordNet(args[0], args[1]);
-        //System.out.println(wordNet.isNoun("entity"));
+        System.out.println(wordNet.isNoun("entity"));
         System.out.println("The common ancestor for worm and bird : " + wordNet.sap("worm", "bird"));
         System.out.println("The distance expected between worm and bird is 5, the result: " +
                 wordNet.distance("worm", "bird"));
