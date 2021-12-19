@@ -1,9 +1,6 @@
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdOut;
 
-import java.util.Arrays;
-import java.util.Collections;
-
 public class Outcast {
     WordNet wordNet;
 
@@ -20,15 +17,17 @@ public class Outcast {
             for (int j = 0; j < nouns.length; j++) {
                 dist += wordNet.distance(nouns[i], nouns[j]);
             }
-            distances[i]=dist;
-            dist=0;
+            distances[i] = dist;
+            dist = 0;
         }
-
         String result = "";
-        int counter = 0;
-        for(String s: nouns){
-            if (distances[counter]>result.length()) result = nouns[counter];
-            counter++;
+        int outcastIndex = 0;
+        for (int i = 0; i < distances.length; i++) {
+            StdOut.println("The distance for : " + nouns[i] + " is: " + distances[i]);
+            if (distances[i] > outcastIndex) {
+                result = nouns[i];
+                outcastIndex = distances[i];
+            }
         }
         return result;
     }
