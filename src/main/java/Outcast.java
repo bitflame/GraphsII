@@ -10,7 +10,7 @@ public class Outcast {
 
     // Given an array of WordNet nouns, return an outcast
     public String outcast(String[] nouns) {
-        SAP sap = new SAP(wordNet.digraph);
+
         int[] distances = new int[nouns.length];
         int dist = 0;
         for (int i = 0; i < nouns.length; i++) {
@@ -23,7 +23,7 @@ public class Outcast {
         String result = "";
         int outcastIndex = 0;
         for (int i = 0; i < distances.length; i++) {
-            StdOut.println("The distance for : " + nouns[i] + " is: " + distances[i]);
+            //StdOut.println("The distance for : " + nouns[i] + " is: " + distances[i]);
             if (distances[i] > outcastIndex) {
                 result = nouns[i];
                 outcastIndex = distances[i];

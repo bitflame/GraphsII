@@ -7,7 +7,7 @@ public class DeluxBFS {
     private boolean[] marked;
     private int[] edgeTo;
     private int[] distTo;
-    private boolean undirected = false;
+
 
     public DeluxBFS(Digraph G, int s) {
         marked = new boolean[G.V()];
@@ -31,33 +31,6 @@ public class DeluxBFS {
         bfs(G, sources);
     }
 
-    public DeluxBFS(Digraph G, int s, boolean undirected) {
-        marked = new boolean[G.V()];
-        distTo = new int[G.V()];
-        edgeTo = new int[G.V()];
-        this.undirected = undirected;
-        for (int v = 0; v < G.V(); v++)
-            distTo[v] = INFINITY;
-        validateVertex(s);
-        bfs(G, s, undirected);
-    }
-
-    private void bfs(Digraph G, int s, boolean undirected) {
-        if (undirected == false) bfs(G, s);
-        Queue<Integer> q = new Queue<>();
-        marked[s] = true;
-        distTo[s] = 0;
-        while (!q.isEmpty()) {
-            int v = q.dequeue();
-            for (int w : G.adj(v)) {
-                edgeTo[w] = v;
-                edgeTo[v] = w;
-                distTo[w] = distTo[v] + 1;
-                marked[w] = true;
-                q.enqueue(w);
-            }
-        }
-    }
 
     private void bfs(Digraph G, int s) {
         Queue<Integer> q = new Queue<Integer>();
@@ -107,14 +80,6 @@ public class DeluxBFS {
         return distTo[v];
     }
 
-    public Iterable<Integer> lockStepBFS(int v, int w) {
-        validateVertex(v);
-        validateVertex(w);
-        this.undirected = true;
-        return new ArrayList<>();/*todo - finish it by deciding if you want to pass the undirected flag to constructor or set
-        it here, and run bfs again, or both. Since you will need to cache the digraph, it might be better to call bfs
-        again with the cached digraph */
-    }
 
     public Iterable<Integer> pathTo(int v) {
         validateVertex(v);
@@ -130,7 +95,7 @@ public class DeluxBFS {
     private void validateVertex(int v) {
         int V = marked.length;
         if (v < 0 || v >= V)
-            throw new IllegalArgumentException("vertex " + v + " is not between 0 and " + (V - 1));
+            throw new IllegalArgumentException("vertex " + v + " is not between 0 and " + (V-1));
     }
 
     private void validateVertices(Iterable<Integer> vertices) {
@@ -138,16 +103,10 @@ public class DeluxBFS {
             throw new IllegalArgumentException("argument is null");
         }
         int V = marked.length;
-        int count = 0;
-        for (Integer v : vertices) {
-            count++;
-            if (v == null) {
-                throw new IllegalArgumentException("vertex is null");
+        for (int v : vertices) {
+            if (v < 0 || v >= V) {
+                throw new IllegalArgumentException("vertex " + v + " is not between 0 and " + (V-1));
             }
-            validateVertex(v);
-        }
-        if (count == 0) {
-            throw new IllegalArgumentException("zero vertices");
         }
     }
 

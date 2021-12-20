@@ -1,8 +1,5 @@
 import edu.princeton.cs.algs4.Stack;
-import edu.princeton.cs.algs4.Digraph;
-import edu.princeton.cs.algs4.DirectedCycle;
-import edu.princeton.cs.algs4.MinPQ;
-import edu.princeton.cs.algs4.In;
+import edu.princeton.cs.algs4.*;
 
 import java.io.File;
 import java.util.*;
@@ -174,51 +171,89 @@ public class SAP {
 
     // length of the shortest ancestral path between v and w; -1 if no such path
     public int length(int v, int w) {
-        if (getPath(v, w) != null) return getPath(v, w).size() - 1;
-        else return -1;
+
+         return minDistance;
     }
 
     // length of the shortest ancestral path between any vertex in v and any vertex in w; -1 if no such path
     public int length(Iterable<Integer> v, Iterable<Integer> w) {
         if (v == null || w == null)
             throw new IllegalArgumentException("Iterable value to SAP.length() can not be null.");
-        List<Integer> prevShortPath = getPath(v.iterator().next(), w.iterator().next());
-        List<Integer> currShortPath = null;
-        for (Integer i : v) {
-            if (i == null) throw new IllegalArgumentException("None of the values in subsets to length() can be null.");
-            for (Integer j : w) {
-                if (j == null)
-                    throw new IllegalArgumentException("None of the values in subsets to length() can be null.");
-                SAP s = new SAP(digraphCopy);
-                currShortPath = s.getPath(i, j);
-                if (prevShortPath.size() > currShortPath.size()) {
-                    prevShortPath = currShortPath;
-                }
-            }
-        }
-        return prevShortPath.size() - 1;
+        ancestor(v,w);
+        return minDistance;
     }
 
     // a common ancestor of v and w that participates in a shortest ancestral path; -1 if no such path
     public int ancestor(int v, int w) {
         //StdOut.printf("from: %d to: %d v: %d w: %d at the beginning of call to ancestor. ", from, to, v, w);
-        if ((v == from || v == to) && (w == from || w == to)) return ancestor;
         DeluxBFS fromBFS = new DeluxBFS(digraphCopy, v);
         DeluxBFS toBFS = new DeluxBFS(digraphCopy, w);
         List<Integer> fromList = new ArrayList<>();
         List<Integer> toList = new ArrayList<>();
         for (int i = 0; i < digraphCopy.V(); i++) {
-            if (fromBFS.hasPathTo(i)) fromList.add(i);
-            if (toBFS.hasPathTo(i)) toList.add(i);
+            if (fromBFS.hasPathTo(i)) {
+                fromList.add(i);
+                //System.out.println("Here is the node: "+i+"Here is its distance from fromNode: "+fromBFS.distTo(i));
+            }
+            if (toBFS.hasPathTo(i)) {
+                toList.add(i);
+                //System.out.println("Here is the node: "+i+"Here is its distance to toNode: "+toBFS.distTo(i));
+            }
         }
+        //StdOut.printf("The size of from_list and to_list before sort: %d %d\n",fromList.size(),toList.size());
+        Collections.sort(fromList, new Comparator<Integer>() {
+            @Override
+            public int compare(Integer o1, Integer o2) {
+                if (fromBFS.distTo(o1) > fromBFS.distTo(o2)) return 1;
+                if (fromBFS.distTo(o2) > fromBFS.distTo(o1)) return -1;
+                return 0;
+            }
+        });
+        Collections.sort(toList, new Comparator<Integer>() {
+            @Override
+            public int compare(Integer o1, Integer o2) {
+                if (toBFS.distTo(o1) > toBFS.distTo(o2)) return 1;
+                if (toBFS.distTo(o2) > toBFS.distTo(o1)) return -1;
+                return 0;
+            }
+        });
+        /*StdOut.printf("The size of from_list and to_list after sort: %d %d\n",fromList.size(),toList.size());
+        StdOut.println("Here is everything that is in fromList: ");
+        for (int i : fromList) {
+            StdOut.println(" Node: " + i + " Node distance from fromNode:" + fromBFS.distTo(i));
+            if (i==20743) StdOut.println("ancestor is in the from list");
+        }
+        StdOut.println("Here is everything that is in toList: ");
+        for (int j : toList) {
+            StdOut.println(" Ndoe: " + j + " Node distance from toNode: " + toBFS.distTo(j));
+            if (j==20743) StdOut.println("ancestor is in the to list");
+        }*/
         List<Integer> path;
-        int i = 0, j = 0, counter = 0;
+        int i = 0, counter = 0;
         while (counter < fromList.size() && counter < toList.size()) {
             i = fromList.get(counter);
-            j = toList.get(counter);
-            //StdOut.printf("checking %d and %d :", i, j);
+            for (int k = 0; k < toList.size(); k++) {
+                if (i==toList.get(k)){
+                    minDistance = fromBFS.distTo(i) + toBFS.distTo(i);
+                    //StdOut.println("minDistance was just changed to :" + minDistance + " for i value of: " + i);
+                    ancestor = i;
+                    path = new ArrayList<>();
+                    for (int j : fromBFS.pathTo(i)) {
+                        path.add(j);
+                    }
+                    for (int j : toBFS.pathTo(i)) {
+                        if (path.contains(j)) ancestor = j;
+                        else path.add(j);
+                    }
+                    //StdOut.printf("Updated minDistance, and ancestor. The value of i is: %d The value of minDistance is: %d\n", i, minDistance);
+                    return ancestor;
+                }
+            }
+            /* j = toList.get(counter);
+            StdOut.printf("checking %d and %d. Distance of %d and %d\n", i, j,fromBFS.distTo(i),toBFS.distTo(j));
             if (i == j) {
                 minDistance = fromBFS.distTo(i) + toBFS.distTo(j);
+                StdOut.println("minDistance was just changed to :" + minDistance + " for i value of: " + i);
                 ancestor = i;
                 path = new ArrayList<>();
                 for (int k : fromBFS.pathTo(i)) {
@@ -228,9 +263,9 @@ public class SAP {
                     if (path.contains(k)) ancestor = k;
                     else path.add(k);
                 }
-                //StdOut.printf("Updated minDistance, and ancestor. The value of i is: %d The value of minDistance is: %d\n", i, minDistance);
+                StdOut.printf("Updated minDistance, and ancestor. The value of i is: %d The value of minDistance is: %d\n", i, minDistance);
                 return ancestor;
-            }
+            } */
             counter++;
         }
         return ancestor;
@@ -240,8 +275,9 @@ public class SAP {
     public int ancestor(Iterable<Integer> v, Iterable<Integer> w) {
         if (v == null || w == null)
             throw new IllegalArgumentException("Iterable value to SAP.ancestor() can not be null.");
-        int distance = minDistance;
-        int currentAncestor = ancestor;
+        int distance = Integer.MAX_VALUE;
+        int currentAncestor = -1;
+
         for (int i : v) {
             for (int j : w) {
                 //StdOut.printf("Calling ancestor(%d, %d) ", i, j);
@@ -253,7 +289,8 @@ public class SAP {
             }
         }
         minDistance = distance;
-        return currentAncestor;
+        ancestor = currentAncestor;
+        return ancestor;
     }
 
     private List<Integer> getPath(int from, int to) {

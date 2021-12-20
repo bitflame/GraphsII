@@ -119,16 +119,18 @@ public class WordNet {
                 if (s.equals(nounB)) idsOfB.add(k);
             }
         }
-        StdOut.printf("Here are the ids for first term: \n");
-        for (int i:idsOfA) {
-            System.out.println(" "+i);
+       /* StdOut.printf("Here are the ids for first term: \n");
+        for (int i : idsOfA) {
+            System.out.println(" " + i);
         }
         StdOut.printf("Here are the ids for the secnd term: \n");
-        for (int i:idsOfB) {
-            System.out.println(" "+i);
-        }
+        for (int i : idsOfB) {
+            System.out.println(" " + i);
+        }*/
         SAP sap = new SAP(digraph);
-        return st.get(sap.ancestor(idsOfA, idsOfB));
+        int result = sap.ancestor(idsOfA, idsOfB);
+        StdOut.println("Here is the id of the ancestor returned by SAP: " + result);
+        return st.get(result);
     }
 
     private void testSap(int i, int j) {
