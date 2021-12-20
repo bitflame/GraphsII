@@ -8,13 +8,9 @@ public class SAP {
     boolean hasCycle = false;
     private Digraph digraphCopy;
     int ancestor = -1;
-    int from;
-    int to;
-    List<Integer> shortPath;
     boolean[] onStack;
-    boolean stop = false;
     private int minDistance = Integer.MAX_VALUE;
-
+    List<Integer> path;
     private class DeluxBFS {
         private static final int INFINITY = Integer.MAX_VALUE;
         private boolean[] marked;
@@ -228,7 +224,7 @@ public class SAP {
             StdOut.println(" Ndoe: " + j + " Node distance from toNode: " + toBFS.distTo(j));
             if (j==20743) StdOut.println("ancestor is in the to list");
         }*/
-        List<Integer> path;
+        path = new ArrayList<>();
         int i = 0, counter = 0;
         while (counter < fromList.size() && counter < toList.size()) {
             i = fromList.get(counter);
@@ -294,153 +290,7 @@ public class SAP {
     }
 
     private List<Integer> getPath(int from, int to) {
-        if (to < 0 || to >= digraphCopy.V())
-            throw new IllegalArgumentException("vertex " + to + " is not between 0 and " + (digraphCopy.V() - 1));
-        if (from < 0 || from >= digraphCopy.V())
-            throw new IllegalArgumentException("vertex " + from + " is not between 0 and " + (digraphCopy.V() - 1));
-        if ((from == this.from || from == this.to) && (to == this.to || to == this.from)) return shortPath;
-        if (from == to) {
-            shortPath = new ArrayList<>();
-            shortPath.add(from);
-            ancestor = from;
-            return shortPath;
-        }
-        if ((digraphCopy.outdegree(to) == 0 && digraphCopy.indegree(to) == 0) || (digraphCopy.outdegree(from) == 0 &&
-                digraphCopy.indegree(from) == 0)) return null;
-        shortPath = new ArrayList<>();
-        this.from = from;
-        this.to = to;
-        DeluxBFS fDBS = new DeluxBFS(digraphCopy, from);
-        DeluxBFS tDBS = new DeluxBFS(digraphCopy, to);
-        MinPQ<Node> fromQueue = new MinPQ<Node>(new Comparator<Node>() {
-            @Override
-            public int compare(Node o1, Node o2) {
-                // number of moves the parent has made plus 1 plus the number moves I have to take from where I am
-                if (o1.prevNode.movesTaken + 1 + o1.movesRemaining > o2.prevNode.movesTaken + 1 + o2.movesRemaining)
-                    return 1;
-                else if (o2.prevNode.movesTaken + 1 + o2.movesRemaining > o1.prevNode.movesTaken + 1 + o1.movesRemaining)
-                    return -1;
-                return 0;
-            }
-        });
-        MinPQ<Node> toQueue = new MinPQ<>(new Comparator<Node>() {
-            @Override
-            public int compare(Node o1, Node o2) {
-                if (o1.prevNode.movesTaken + 1 + o1.movesRemaining > o2.prevNode.movesTaken + 1 + o2.movesRemaining)
-                    return 1;
-                else if (o2.prevNode.movesTaken + 1 + o2.movesRemaining > o1.prevNode.movesTaken + 1 + o1.movesRemaining)
-                    return -1;
-                return 0;
-            }
-        });
-        Node fromNode = new Node(from, null, 0, tDBS.distTo(from));
-        fromQueue.insert(fromNode);
-        Node toNode = new Node(to, null, 0, fDBS.distTo(to));
-        toQueue.insert(toNode);
-        Node minFNode = fromQueue.delMin();
-        onStack[minFNode.id] = true;
-        Node minTNode = toQueue.delMin();
-        onStack[minTNode.id] = true;
-        Node newNode;
-        /* Need to populate fromQueue and toQueue here once b/c grandparent is null, and throws an exception when I check
-         * for A*'s problem below . Populate the queues with forward and reverse nodes each time; you can also do this
-         * only when there is a cycle */
-        for (int i : digraphCopy.adj(minFNode.id)) {
-            newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
-            fromQueue.insert(newNode);
-        }
-        if (!fromQueue.isEmpty()) {
-            minFNode = fromQueue.delMin();
-            if (onStack[minFNode.id]) {
-                shortPath = extractPath(minFNode, minTNode, minFNode.id);
-                Collections.sort(shortPath);
-                return shortPath;
-            }
-            onStack[minFNode.id] = true;
-        }
-
-        /* populate ToQueue */
-        for (int i : digraphCopy.adj(minTNode.id)) {
-            if (i != to) {
-                newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
-                toQueue.insert(newNode);
-            }
-        }
-        if (!toQueue.isEmpty()) {
-            minTNode = toQueue.delMin();
-            if (onStack[minTNode.id]) {
-                shortPath = extractPath(minFNode, minTNode, minTNode.id);
-                Collections.sort(shortPath);
-                return shortPath;
-            }
-            onStack[minTNode.id] = true;
-        }
-        Node previousFromNode;
-        Node previousToNode;
-        while (stop == false) {
-            previousToNode = minTNode;
-            previousFromNode = minFNode;
-            for (int i : digraphCopy.adj(minFNode.id)) {
-                if (i != minFNode.prevNode.id) { // to address A*'s problem with the node before parent
-                    newNode = new Node(i, minFNode, minFNode.movesTaken + 1, tDBS.distTo(i));
-                    fromQueue.insert(newNode);
-                }
-            }
-            if (!fromQueue.isEmpty()) {
-                minFNode = fromQueue.delMin();
-                if (onStack[minFNode.id]) {
-                    while (minTNode != null && minFNode != null && minTNode.id != minFNode.id)
-                        minTNode = minTNode.prevNode;
-                    stop = true;
-                    shortPath = extractPath(minFNode, minTNode, minFNode.id);
-                    Collections.sort(shortPath);
-                    return shortPath;
-                }
-                onStack[minFNode.id] = true;
-            }
-
-            for (int i : digraphCopy.adj(minTNode.id)) {
-                if (i != minTNode.prevNode.id) {
-                    newNode = new Node(i, minTNode, minTNode.movesTaken + 1, fDBS.distTo(i));
-                    toQueue.insert(newNode);
-                }
-            }
-            if (!toQueue.isEmpty()) {
-                minTNode = toQueue.delMin();
-                if (onStack[minTNode.id]) {
-                    while (minFNode != null && minTNode != null && minTNode.id != minFNode.id)
-                        minFNode = minFNode.prevNode;
-                    stop = true;
-                    shortPath = extractPath(minFNode, minTNode, minTNode.id);
-                    Collections.sort(shortPath);
-                    return shortPath;
-                }
-                onStack[minTNode.id] = true;
-            }/* if the nodes do not change don't stay in the loop. Reasons are either the queues are empty or there are
-            no more adjacent nodes or both */
-            if (minFNode == previousFromNode && minTNode == previousToNode) break;
-        }
-        return shortPath;
-    }
-
-
-    private List<Integer> extractPath(Node minF, Node minT, int match) {
-        List<Integer> path = new ArrayList<>();
-        ancestor = match; // ancestor should be the first match
-        while (minF != null && minF.prevNode != null) {
-            if (!path.contains(minF.id)) {
-                path.add(minF.id);
-            }
-            minF = minF.prevNode;
-        }
-        while (minT != null && minT.prevNode != null) {
-            if (!path.contains(minT.id)) {
-                path.add(minT.id);
-            }
-            minT = minT.prevNode;
-        }
-        if (!path.contains(from)) path.add(from);
-        if (!path.contains(to)) path.add(to);
+        ancestor(from,to);
         return path;
     }
 

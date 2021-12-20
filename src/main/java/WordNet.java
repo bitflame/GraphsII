@@ -151,7 +151,7 @@ public class WordNet {
         Stopwatch time = new Stopwatch();
         System.out.println("The common ancestor between worm and animal: " + wordNet.sap("worm", "bird"));
         Double now = time.elapsedTime();
-        StdOut.println("worm/bird test using HashTables took: "+now);
+        StdOut.println("worm/bird test using RedBlackBST took: "+now);
         System.out.println(wordNet.isNoun("entity"));
         //System.out.println("The common ancestor for worm and bird : " + wordNet.sap("worm", "bird"));
         //System.out.println("The distance expected between worm and bird is 5, the result: " +wordNet.distance("worm", "bird"));
