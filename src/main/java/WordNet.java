@@ -129,7 +129,7 @@ public class WordNet {
         }*/
         SAP sap = new SAP(digraph);
         int result = sap.ancestor(idsOfA, idsOfB);
-        StdOut.println("Here is the id of the ancestor returned by SAP: " + result);
+        //StdOut.println("Here is the id of the ancestor returned by SAP: " + result);
         return st.get(result);
     }
 
@@ -148,6 +148,10 @@ public class WordNet {
     public static void main(String[] args) {
         System.out.println("using " + args[0] + " and " + args[1] + "files for this round.");
         WordNet wordNet = new WordNet(args[0], args[1]);
+        Stopwatch time = new Stopwatch();
+        System.out.println("The common ancestor between worm and animal: " + wordNet.sap("worm", "bird"));
+        Double now = time.elapsedTime();
+        StdOut.println("worm/bird test using HashTables took: "+now);
         System.out.println(wordNet.isNoun("entity"));
         //System.out.println("The common ancestor for worm and bird : " + wordNet.sap("worm", "bird"));
         //System.out.println("The distance expected between worm and bird is 5, the result: " +wordNet.distance("worm", "bird"));

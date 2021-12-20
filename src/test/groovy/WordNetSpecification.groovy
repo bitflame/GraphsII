@@ -7,8 +7,9 @@ class WordNetSpecification extends Specification {
         then:
         wordNet.distance(nounA, nounB) == result
         where:
-        synset        | hypernym        | nounA  | nounB  | result
-        "synsets.txt" | "hypernyms.txt" | "worm" | "bird" | 5
+        synset        | hypernym        | nounA        | nounB            | result
+        "synsets.txt" | "hypernyms.txt" | "worm"       | "bird"           | 5
+        "synsets.txt" | "hypernyms.txt" | "quadrangle" | "mountain_devil" | 11
     }
 
     def "WordNet isNoun should work"() {
