@@ -15,13 +15,13 @@ public class SAP {
     private int minDistance = Integer.MAX_VALUE;
     List<Integer> path;
 
-    private static class DeluxBFS {
+    private static class DeluxeBFS {
         private static final int INFINITY = Integer.MAX_VALUE;
         private final boolean[] marked;
         private final int[] edgeTo;
         private final int[] distTo;
 
-        public DeluxBFS(Digraph G, int s) {
+        public DeluxeBFS(Digraph G, int s) {
             marked = new boolean[G.V()];
             distTo = new int[G.V()];
             edgeTo = new int[G.V()];
@@ -32,7 +32,7 @@ public class SAP {
             bfs(G, s);
         }
 
-        public DeluxBFS(Digraph G, Iterable<Integer> sources) {
+        public DeluxeBFS(Digraph G, Iterable<Integer> sources) {
             marked = new boolean[G.V()];
             distTo = new int[G.V()];
             edgeTo = new int[G.V()];
@@ -80,18 +80,6 @@ public class SAP {
                     }
                 }
             }
-        /*System.out.println("\nHere is the what is in edgeTo: ");
-        for (int i : edgeTo) {
-            System.out.print(i + " ");
-        }
-        System.out.println("\nHere is the what is in distTo: ");
-        for (int i : distTo) {
-            System.out.print(" " + i);
-        }
-        System.out.println("\nHere is what is marked i.e. has a path ");
-        for (boolean i : marked) {
-            System.out.print(" " + i);
-        }*/
         }
 
         public boolean hasPathTo(int v) {
@@ -146,9 +134,6 @@ public class SAP {
         if (digraph == null) throw new IllegalArgumentException("Digraph value can not be null");
         DirectedCycle cycleFinder = new DirectedCycle(digraph);
         onStack = new boolean[digraph.V()];
-        //marked = new boolean[digraph.V()];
-        //edgeTo = new int[digraph.V()];
-        //distTo = new int[digraph.V()];
         if (cycleFinder.hasCycle()) {
             hasCycle = true;
         }
@@ -172,8 +157,8 @@ public class SAP {
     // a common ancestor of v and w that participates in a shortest ancestral path; -1 if no such path
     public int ancestor(int v, int w) {
         //StdOut.printf("from: %d to: %d v: %d w: %d at the beginning of call to ancestor. ", from, to, v, w);
-        DeluxBFS fromBFS = new DeluxBFS(digraphCopy, v);
-        DeluxBFS toBFS = new DeluxBFS(digraphCopy, w);
+        DeluxeBFS fromBFS = new DeluxeBFS(digraphCopy, v);
+        DeluxeBFS toBFS = new DeluxeBFS(digraphCopy, w);
         List<Integer> fromList = new ArrayList<>();
         List<Integer> toList = new ArrayList<>();
         for (int i = 0; i < digraphCopy.V(); i++) {
@@ -187,106 +172,30 @@ public class SAP {
             }
         }
         //StdOut.printf("The size of from_list and to_list before sort: %d %d\n",fromList.size(),toList.size());
-        /*Collections.sort(fromList, new Comparator<Integer>() {
-            @Override
-            public int compare(Integer o1, Integer o2) {
-                if (fromBFS.distTo(o1) > fromBFS.distTo(o2)) return 1;
-                if (fromBFS.distTo(o2) > fromBFS.distTo(o1)) return -1;
-                return 0;
-            }
-        });
-        Collections.sort(toList, new Comparator<Integer>() {
-            @Override
-            public int compare(Integer o1, Integer o2) {
-                if (toBFS.distTo(o1) > toBFS.distTo(o2)) return 1;
-                if (toBFS.distTo(o2) > toBFS.distTo(o1)) return -1;
-                return 0;
-            }
-        });*/
-        fromList.sort((o1, o2) -> {
-            if (fromBFS.distTo(o1) > fromBFS.distTo(o2)) return 1;
-            if (fromBFS.distTo(o2) > fromBFS.distTo(o1)) return -1;
-            return 0;
-        });
-        toList.sort((o1, o2) -> {
-            if (toBFS.distTo(o1) > toBFS.distTo(o2)) return 1;
-            if (toBFS.distTo(o2) > toBFS.distTo(o1)) return -1;
-            return 0;
-        });
+        fromList.sort(Comparator.comparingInt(fromBFS::distTo));
+        toList.sort(Comparator.comparingInt(toBFS::distTo));
 
-        /*StdOut.printf("The size of from_list and to_list after sort: %d %d\n",fromList.size(),toList.size());
-        StdOut.println("Here is everything that is in fromList: ");
-        for (int i : fromList) {
-            StdOut.println(" Node: " + i + " Node distance from fromNode:" + fromBFS.distTo(i));
-            if (i==20743) StdOut.println("ancestor is in the from list");
-        }
-        StdOut.println("Here is everything that is in toList: ");
-        for (int j : toList) {
-            StdOut.println(" Ndoe: " + j + " Node distance from toNode: " + toBFS.distTo(j));
-            if (j==20743) StdOut.println("ancestor is in the to list");
-        }*/
         path = new ArrayList<>();
         int from;
         int to;
-        for (int i = 0; i < fromList.size(); i++) {
-            for (int j = 0; j < toList.size(); j++) {
-                from = fromList.get(i);
-                to = toList.get(j);
+        for (Integer integer : fromList) {
+            for (Integer value : toList) {
+                from = integer;
+                to = value;
                 if (from == to) {
                     minDistance = fromBFS.distTo(from) + toBFS.distTo(to);
                     ancestor = from;
                     path = new ArrayList<>();
-                    for (int k : fromBFS.pathTo(ancestor)) {
+                    for (int k : Objects.requireNonNull(fromBFS.pathTo(ancestor))) {
                         path.add(k);
                     }
-                    for (int k : toBFS.pathTo(ancestor)) {
+                    for (int k : Objects.requireNonNull(toBFS.pathTo(ancestor))) {
                         if (!path.contains(k)) path.add(k);
                     }
                     return ancestor;
                 }
             }
         }
-        /*
-        path = new ArrayList<>();
-        int i = 0, counter = 0;
-        while (counter < fromList.size() && counter < toList.size()) {
-            i = fromList.get(counter);
-            for (int k = 0; k < toList.size(); k++) {
-                if (i==toList.get(k)){
-                    minDistance = fromBFS.distTo(i) + toBFS.distTo(i);
-                    StdOut.println("minDistance was just changed to :" + minDistance + " for i value of: " + i);
-                    ancestor = i;
-                    path = new ArrayList<>();
-                    for (int j : fromBFS.pathTo(i)) {
-                        path.add(j);
-                    }
-                    for (int j : toBFS.pathTo(i)) {
-                        if (path.contains(j)) ancestor = j;
-                        else path.add(j);
-                    }
-                    StdOut.printf("Updated minDistance, and ancestor. The value of i is: %d The value of minDistance is: %d\n", i, minDistance);
-                    return ancestor;
-                }
-            }
-             j = toList.get(counter);
-            StdOut.printf("checking %d and %d. Distance of %d and %d\n", i, j,fromBFS.distTo(i),toBFS.distTo(j));
-            if (i == j) {
-                minDistance = fromBFS.distTo(i) + toBFS.distTo(j);
-                StdOut.println("minDistance was just changed to :" + minDistance + " for i value of: " + i);
-                ancestor = i;
-                path = new ArrayList<>();
-                for (int k : fromBFS.pathTo(i)) {
-                    path.add(k);
-                }
-                for (int k : toBFS.pathTo(j)) {
-                    if (path.contains(k)) ancestor = k;
-                    else path.add(k);
-                }
-                StdOut.printf("Updated minDistance, and ancestor. The value of i is: %d The value of minDistance is: %d\n", i, minDistance);
-                return ancestor;
-            }
-            counter++;
-        }*/
         return ancestor;
     }
 
