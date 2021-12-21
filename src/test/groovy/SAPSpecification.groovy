@@ -14,7 +14,6 @@ class SAPSpecification extends Specification {
 
         where:
         file                             | from | to | shortest
-        "digraph3.txt"                   | 1    | 2  | [1,2]
         "digraph25.txt"                  | 2    | 0  | [0, 2]
         "digraph25.txt"                  | 0    | 2  | [0, 2]
         "digraph25.txt"                  | 1    | 2  | [0, 1, 2]
