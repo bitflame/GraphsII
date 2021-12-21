@@ -1,6 +1,7 @@
 import edu.princeton.cs.algs4.Digraph;
 import edu.princeton.cs.algs4.DirectedCycle;
 import edu.princeton.cs.algs4.In;
+import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.Stack;
 
 import java.io.File;
@@ -8,17 +9,17 @@ import java.util.*;
 
 public class SAP {
     boolean hasCycle = false;
-    private Digraph digraphCopy;
+    private final Digraph digraphCopy;
     int ancestor = -1;
     boolean[] onStack;
     private int minDistance = Integer.MAX_VALUE;
     List<Integer> path;
 
-    private class DeluxBFS {
+    private static class DeluxBFS {
         private static final int INFINITY = Integer.MAX_VALUE;
-        private boolean[] marked;
-        private int[] edgeTo;
-        private int[] distTo;
+        private final boolean[] marked;
+        private final int[] edgeTo;
+        private final int[] distTo;
 
         public DeluxBFS(Digraph G, int s) {
             marked = new boolean[G.V()];
@@ -44,7 +45,7 @@ public class SAP {
 
 
         private void bfs(Digraph G, int s) {
-            edu.princeton.cs.algs4.Queue<Integer> q = new edu.princeton.cs.algs4.Queue<Integer>();
+            Queue<Integer> q = new Queue<>();
             marked[s] = true;
             distTo[s] = 0;
             q.enqueue(s);
@@ -62,7 +63,7 @@ public class SAP {
         }
 
         private void bfs(Digraph G, Iterable<Integer> sources) {
-            edu.princeton.cs.algs4.Queue<Integer> q = new edu.princeton.cs.algs4.Queue<Integer>();
+            Queue<Integer> q = new Queue<>();
             for (int s : sources) {
                 marked[s] = true;
                 distTo[s] = 0;
@@ -106,7 +107,7 @@ public class SAP {
         public Iterable<Integer> pathTo(int v) {
             validateVertex(v);
             if (!hasPathTo(v)) return null;
-            edu.princeton.cs.algs4.Stack<Integer> path = new Stack<Integer>();
+            Stack<Integer> path = new Stack<Integer>();
             int x;
             for (x = v; distTo[x] != 0; x = edgeTo[x])
                 path.push(x);
@@ -140,20 +141,6 @@ public class SAP {
         }
     }
 
-    private class Node {
-        private final int id;
-        private final Node prevNode;
-        private final int movesTaken;
-        private final int movesRemaining;
-
-        public Node(int id, Node prevNode, int taken, int remaining) {
-            this.id = id;
-            this.prevNode = prevNode;
-            this.movesTaken = taken;
-            this.movesRemaining = remaining;
-        }
-    }
-
     // constructor takes a digraph ( not necessarily a DAG )
     public SAP(Digraph digraph) {
         if (digraph == null) throw new IllegalArgumentException("Digraph value can not be null");
@@ -170,7 +157,7 @@ public class SAP {
 
     // length of the shortest ancestral path between v and w; -1 if no such path
     public int length(int v, int w) {
-
+        ancestor(v,w);
         return minDistance;
     }
 
@@ -200,7 +187,7 @@ public class SAP {
             }
         }
         //StdOut.printf("The size of from_list and to_list before sort: %d %d\n",fromList.size(),toList.size());
-        Collections.sort(fromList, new Comparator<Integer>() {
+        /*Collections.sort(fromList, new Comparator<Integer>() {
             @Override
             public int compare(Integer o1, Integer o2) {
                 if (fromBFS.distTo(o1) > fromBFS.distTo(o2)) return 1;
@@ -215,7 +202,18 @@ public class SAP {
                 if (toBFS.distTo(o2) > toBFS.distTo(o1)) return -1;
                 return 0;
             }
+        });*/
+        fromList.sort((o1, o2) -> {
+            if (fromBFS.distTo(o1) > fromBFS.distTo(o2)) return 1;
+            if (fromBFS.distTo(o2) > fromBFS.distTo(o1)) return -1;
+            return 0;
         });
+        toList.sort((o1, o2) -> {
+            if (toBFS.distTo(o1) > toBFS.distTo(o2)) return 1;
+            if (toBFS.distTo(o2) > toBFS.distTo(o1)) return -1;
+            return 0;
+        });
+
         /*StdOut.printf("The size of from_list and to_list after sort: %d %d\n",fromList.size(),toList.size());
         StdOut.println("Here is everything that is in fromList: ");
         for (int i : fromList) {
@@ -314,7 +312,7 @@ public class SAP {
         return ancestor;
     }
 
-    private List<Integer> getPath(int from, int to) {
+    List<Integer> getPath(int from, int to) {
         ancestor(from, to);
         Collections.sort(path);
         return path;

@@ -134,6 +134,7 @@ class SAPSpecification extends Specification {
         when:
         SAP sap = new SAP()
         then:
+        sap.getPath(0,1)
         thrown(IllegalArgumentException)
     }
 
@@ -142,9 +143,9 @@ class SAPSpecification extends Specification {
         Digraph digraph = new Digraph(new In("digraph1.txt"))
         SAP sap = new SAP(digraph)
         //[13, 23, 24] | [6, 16, 17]
-        Iterable<Integer> iter_one = null
-        Iterable<Integer> iter_two = [6, 16, 17]
-        sap.length(iter_one, iter_two);
+        Iterable<Integer> inter_one = null
+        Iterable<Integer> inter_two = [6, 16, 17]
+        sap.length(inter_one, inter_two)
         then:
         thrown(IllegalArgumentException)
     }
@@ -175,7 +176,7 @@ class SAPSpecification extends Specification {
 
     def "should spot cycles in files"() {
         when:
-        Connected connected = new Connected();
+        Connected connected = new Connected()
         Digraph digraph = connected.createGraph(file, size)
         DirectedCycle cycleFinder = new DirectedCycle(digraph)
         then:
