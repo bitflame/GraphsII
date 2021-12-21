@@ -1,5 +1,7 @@
+import edu.princeton.cs.algs4.Digraph;
+import edu.princeton.cs.algs4.DirectedCycle;
+import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.Stack;
-import edu.princeton.cs.algs4.*;
 
 import java.io.File;
 import java.util.*;
@@ -187,7 +189,6 @@ public class SAP {
         DeluxBFS toBFS = new DeluxBFS(digraphCopy, w);
         List<Integer> fromList = new ArrayList<>();
         List<Integer> toList = new ArrayList<>();
-
         for (int i = 0; i < digraphCopy.V(); i++) {
             if (fromBFS.hasPathTo(i)) {
                 fromList.add(i);
@@ -231,8 +232,8 @@ public class SAP {
         while (counter < fromList.size() && counter < toList.size()) {
             /* I have to write something that says if i is closer to w, than the values coming up from toList ...*/
             i = fromList.get(counter);
-            for (int k : toList) {
-                if (i == k) {
+            for (int k = 0; k < toList.size(); k++) {
+                if (i == toList.get(k)) {
                     minDistance = fromBFS.distTo(i) + toBFS.distTo(i);
                     //StdOut.println("minDistance was just changed to :" + minDistance + " for i value of: " + i);
                     ancestor = i;
@@ -297,33 +298,6 @@ public class SAP {
         return path;
     }
 
-    // lock-step bfs attempt
-    private int getAncestorII(int from, int to) {
-        // create two breath first searches
-        DeluxBFS fromBFS = new DeluxBFS(digraphCopy, from);
-        DeluxBFS toBFS = new DeluxBFS(digraphCopy, to);
-        int[] distances = new int[digraphCopy.V()];
-        for (int i = 0; i < distances.length; i++) {
-            distances[i] = -1;
-        }
-        for (int i = 0; i < digraphCopy.V(); i++) {
-            if (fromBFS.hasPathTo(i) && toBFS.hasPathTo(i)) {
-                distances[i] = fromBFS.distTo(i) + toBFS.distTo(i);
-            }
-        }
-        int counter = 0;
-
-        while (counter < distances.length) {
-            if (distances[counter] != -1 && distances[counter] < minDistance) {
-                minDistance = distances[counter];
-                ancestor = counter;
-            }
-            counter++;
-        }
-        // minDistance = minDistance - 2;
-        return ancestor;
-    }
-
     public static void main(String[] args) {
         /*
         System.out.println(sap.ancestor(1, 2));
@@ -346,13 +320,11 @@ Digraph digraph = new Digraph(new In(new File("src/main/resources/digraph-ambigu
         SAP sap = new SAP(digraph);
         System.out.print("The path between 1 and 2 should be: [ 1 2 ] ");
         System.out.print("[");
-        for (int i : sap.getPath(1, 3)) {
+        for (int i : sap.getPath(1, 2)) {
             System.out.print(" " + i + " ");
-
         }
         System.out.println("]");
-        StdOut.println("Here is ancestor: " + sap.ancestor);
-        StdOut.println("Here is ancestor according to getAncestorII() : " + sap.getAncestorII(1, 2));
+
 
         List<Integer> l1 = new ArrayList<>(Arrays.asList(2, 5));
         List<Integer> l2 = new ArrayList<>(Arrays.asList(0, 6));
