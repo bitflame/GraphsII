@@ -142,7 +142,7 @@ class SAPSpecification extends Specification {
         Digraph digraph = new Digraph(new In("digraph1.txt"))
         SAP sap = new SAP(digraph)
         //[13, 23, 24] | [6, 16, 17]
-        Iterable<Integer> iter_one = [null, 23, 24]
+        Iterable<Integer> iter_one = null
         Iterable<Integer> iter_two = [6, 16, 17]
         sap.length(iter_one, iter_two);
         then:

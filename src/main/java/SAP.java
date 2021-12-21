@@ -1,5 +1,7 @@
+import edu.princeton.cs.algs4.Digraph;
+import edu.princeton.cs.algs4.DirectedCycle;
+import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.Stack;
-import edu.princeton.cs.algs4.*;
 
 import java.io.File;
 import java.util.*;
@@ -11,6 +13,7 @@ public class SAP {
     boolean[] onStack;
     private int minDistance = Integer.MAX_VALUE;
     List<Integer> path;
+
     private class DeluxBFS {
         private static final int INFINITY = Integer.MAX_VALUE;
         private boolean[] marked;
@@ -168,14 +171,14 @@ public class SAP {
     // length of the shortest ancestral path between v and w; -1 if no such path
     public int length(int v, int w) {
 
-         return minDistance;
+        return minDistance;
     }
 
     // length of the shortest ancestral path between any vertex in v and any vertex in w; -1 if no such path
     public int length(Iterable<Integer> v, Iterable<Integer> w) {
         if (v == null || w == null)
             throw new IllegalArgumentException("Iterable value to SAP.length() can not be null.");
-        ancestor(v,w);
+        ancestor(v, w);
         return minDistance;
     }
 
@@ -225,13 +228,35 @@ public class SAP {
             if (j==20743) StdOut.println("ancestor is in the to list");
         }*/
         path = new ArrayList<>();
+        int from;
+        int to;
+        for (int i = 0; i < fromList.size(); i++) {
+            for (int j = 0; j < toList.size(); j++) {
+                from = fromList.get(i);
+                to = toList.get(j);
+                if (from == to) {
+                    minDistance = fromBFS.distTo(from) + toBFS.distTo(to);
+                    ancestor = from;
+                    path = new ArrayList<>();
+                    for (int k : fromBFS.pathTo(ancestor)) {
+                        path.add(k);
+                    }
+                    for (int k : toBFS.pathTo(ancestor)) {
+                        if (!path.contains(k)) path.add(k);
+                    }
+                    return ancestor;
+                }
+            }
+        }
+        /*
+        path = new ArrayList<>();
         int i = 0, counter = 0;
         while (counter < fromList.size() && counter < toList.size()) {
             i = fromList.get(counter);
             for (int k = 0; k < toList.size(); k++) {
                 if (i==toList.get(k)){
                     minDistance = fromBFS.distTo(i) + toBFS.distTo(i);
-                    //StdOut.println("minDistance was just changed to :" + minDistance + " for i value of: " + i);
+                    StdOut.println("minDistance was just changed to :" + minDistance + " for i value of: " + i);
                     ancestor = i;
                     path = new ArrayList<>();
                     for (int j : fromBFS.pathTo(i)) {
@@ -241,11 +266,11 @@ public class SAP {
                         if (path.contains(j)) ancestor = j;
                         else path.add(j);
                     }
-                    //StdOut.printf("Updated minDistance, and ancestor. The value of i is: %d The value of minDistance is: %d\n", i, minDistance);
+                    StdOut.printf("Updated minDistance, and ancestor. The value of i is: %d The value of minDistance is: %d\n", i, minDistance);
                     return ancestor;
                 }
             }
-            /* j = toList.get(counter);
+             j = toList.get(counter);
             StdOut.printf("checking %d and %d. Distance of %d and %d\n", i, j,fromBFS.distTo(i),toBFS.distTo(j));
             if (i == j) {
                 minDistance = fromBFS.distTo(i) + toBFS.distTo(j);
@@ -261,9 +286,9 @@ public class SAP {
                 }
                 StdOut.printf("Updated minDistance, and ancestor. The value of i is: %d The value of minDistance is: %d\n", i, minDistance);
                 return ancestor;
-            } */
+            }
             counter++;
-        }
+        }*/
         return ancestor;
     }
 
@@ -290,7 +315,8 @@ public class SAP {
     }
 
     private List<Integer> getPath(int from, int to) {
-        ancestor(from,to);
+        ancestor(from, to);
+        Collections.sort(path);
         return path;
     }
 
@@ -314,20 +340,6 @@ Digraph digraph = new Digraph(new In(new File("src/main/resources/digraph-ambigu
         /* Reading in digraph25.txt here */
         Digraph digraph = new Digraph(new In(args[0]));
         SAP sap = new SAP(digraph);
-        System.out.print("The path between 1 and 2 should be: [ 1 2 ] ");
-        System.out.print("[");
-        for (int i : sap.getPath(1, 2)) {
-            System.out.print(" " + i + " ");
-        }
-        System.out.println("]");
-
-
-        List<Integer> l1 = new ArrayList<>(Arrays.asList(2, 5));
-        List<Integer> l2 = new ArrayList<>(Arrays.asList(0, 6));
-        digraph = new Digraph(new In(args[0]));
-        sap = new SAP(digraph);
-        System.out.println("ancestor between l1 and l2 expected to be 0: " + sap.ancestor(l1, l2));
-        System.out.println("The path length for the shortest path should be 1: " + sap.length(l1, l2));
         System.out.print("The path between 2 and 0 should be: [ 0 2 ] ");
         System.out.print("[");
         for (int i : sap.getPath(2, 0)) {
@@ -336,6 +348,18 @@ Digraph digraph = new Digraph(new In(new File("src/main/resources/digraph-ambigu
         System.out.println("]");
         System.out.println("And the ancestor is : " + sap.ancestor(2, 0));
         System.out.println();
+        System.out.print("The path between 1 and 2 should be: [ 1 2 ] ");
+        System.out.print("[");
+        for (int i : sap.getPath(1, 2)) {
+            System.out.print(" " + i + " ");
+        }
+        System.out.println("]");
+        List<Integer> l1 = new ArrayList<>(Arrays.asList(2, 5));
+        List<Integer> l2 = new ArrayList<>(Arrays.asList(0, 6));
+        digraph = new Digraph(new In(args[0]));
+        sap = new SAP(digraph);
+        System.out.println("ancestor between l1 and l2 expected to be 0: " + sap.ancestor(l1, l2));
+        System.out.println("The path length for the shortest path should be 1: " + sap.length(l1, l2));
         System.out.print("The path between 1 and 2 should be [0 1 2] ");
         System.out.print("[");
         sap = new SAP(digraph);
