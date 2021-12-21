@@ -1,7 +1,5 @@
-import edu.princeton.cs.algs4.Digraph;
-import edu.princeton.cs.algs4.DirectedCycle;
-import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.Stack;
+import edu.princeton.cs.algs4.*;
 
 import java.io.File;
 import java.util.*;
@@ -13,7 +11,6 @@ public class SAP {
     boolean[] onStack;
     private int minDistance = Integer.MAX_VALUE;
     List<Integer> path;
-
     private class DeluxBFS {
         private static final int INFINITY = Integer.MAX_VALUE;
         private boolean[] marked;
@@ -171,14 +168,14 @@ public class SAP {
     // length of the shortest ancestral path between v and w; -1 if no such path
     public int length(int v, int w) {
 
-        return minDistance;
+         return minDistance;
     }
 
     // length of the shortest ancestral path between any vertex in v and any vertex in w; -1 if no such path
     public int length(Iterable<Integer> v, Iterable<Integer> w) {
         if (v == null || w == null)
             throw new IllegalArgumentException("Iterable value to SAP.length() can not be null.");
-        ancestor(v, w);
+        ancestor(v,w);
         return minDistance;
     }
 
@@ -216,7 +213,7 @@ public class SAP {
                 return 0;
             }
         });
-      /* StdOut.printf("The size of from_list and to_list after sort: %d %d\n",fromList.size(),toList.size());
+        /*StdOut.printf("The size of from_list and to_list after sort: %d %d\n",fromList.size(),toList.size());
         StdOut.println("Here is everything that is in fromList: ");
         for (int i : fromList) {
             StdOut.println(" Node: " + i + " Node distance from fromNode:" + fromBFS.distTo(i));
@@ -230,10 +227,9 @@ public class SAP {
         path = new ArrayList<>();
         int i = 0, counter = 0;
         while (counter < fromList.size() && counter < toList.size()) {
-            /* I have to write something that says if i is closer to w, than the values coming up from toList ...*/
             i = fromList.get(counter);
             for (int k = 0; k < toList.size(); k++) {
-                if (i == toList.get(k)) {
+                if (i==toList.get(k)){
                     minDistance = fromBFS.distTo(i) + toBFS.distTo(i);
                     //StdOut.println("minDistance was just changed to :" + minDistance + " for i value of: " + i);
                     ancestor = i;
@@ -294,7 +290,7 @@ public class SAP {
     }
 
     private List<Integer> getPath(int from, int to) {
-        ancestor(from, to);
+        ancestor(from,to);
         return path;
     }
 
