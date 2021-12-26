@@ -12,7 +12,7 @@ public class SAP {
     private final Digraph digraphCopy;
     int ancestor = -1;
     boolean[] onStack;
-    private int minDistance = Integer.MAX_VALUE;
+    private int minDistance = -1;
     List<Integer> path;
 
     private static class DeluxeBFS {
@@ -142,7 +142,7 @@ public class SAP {
 
     // length of the shortest ancestral path between v and w; -1 if no such path
     public int length(int v, int w) {
-        ancestor(v,w);
+        ancestor(v, w);
         return minDistance;
     }
 
@@ -154,9 +154,18 @@ public class SAP {
         return minDistance;
     }
 
+    private boolean nodeExists(int h) {
+        boolean exists = false;
+        for (int i = 0; i < digraphCopy.V(); i++) {
+            if (h == i) exists = true;
+        }
+        return exists;
+    }
+
     // a common ancestor of v and w that participates in a shortest ancestral path; -1 if no such path
     public int ancestor(int v, int w) {
         //StdOut.printf("from: %d to: %d v: %d w: %d at the beginning of call to ancestor. ", from, to, v, w);
+        if (!nodeExists(v) || !nodeExists(w)) return ancestor;
         DeluxeBFS fromBFS = new DeluxeBFS(digraphCopy, v);
         DeluxeBFS toBFS = new DeluxeBFS(digraphCopy, w);
         List<Integer> fromList = new ArrayList<>();
@@ -164,14 +173,14 @@ public class SAP {
         for (int i = 0; i < digraphCopy.V(); i++) {
             if (fromBFS.hasPathTo(i)) {
                 fromList.add(i);
-                //System.out.println("Here is the node: "+i+"Here is its distance from fromNode: "+fromBFS.distTo(i));
+                // System.out.println("Here is the node: "+i+"Here is its distance from fromNode: "+fromBFS.distTo(i));
             }
             if (toBFS.hasPathTo(i)) {
                 toList.add(i);
-                //System.out.println("Here is the node: "+i+"Here is its distance to toNode: "+toBFS.distTo(i));
+                // System.out.println("Here is the node: "+i+"Here is its distance to toNode: "+toBFS.distTo(i));
             }
         }
-        //StdOut.printf("The size of from_list and to_list before sort: %d %d\n",fromList.size(),toList.size());
+        // StdOut.printf("The size of from_list and to_list before sort: %d %d\n",fromList.size(),toList.size());
         fromList.sort(Comparator.comparingInt(fromBFS::distTo));
         toList.sort(Comparator.comparingInt(toBFS::distTo));
 
@@ -208,7 +217,7 @@ public class SAP {
 
         for (int i : v) {
             for (int j : w) {
-                //StdOut.printf("Calling ancestor(%d, %d) ", i, j);
+                // StdOut.printf("Calling ancestor(%d, %d) ", i, j);
                 ancestor(i, j);
                 if (distance > minDistance) {
                     distance = minDistance;

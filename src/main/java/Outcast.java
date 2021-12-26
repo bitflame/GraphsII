@@ -23,7 +23,7 @@ public class Outcast {
         String result = "";
         int outcastIndex = 0;
         for (int i = 0; i < distances.length; i++) {
-            //StdOut.println("The distance for : " + nouns[i] + " is: " + distances[i]);
+            // StdOut.println("The distance for : " + nouns[i] + " is: " + distances[i]);
             if (distances[i] > outcastIndex) {
                 result = nouns[i];
                 outcastIndex = distances[i];
