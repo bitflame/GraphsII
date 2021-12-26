@@ -185,6 +185,7 @@ public class SAP {
         toList.sort(Comparator.comparingInt(toBFS::distTo));
 
         path = new ArrayList<>();
+
         int from;
         int to;
         for (Integer integer : fromList) {
