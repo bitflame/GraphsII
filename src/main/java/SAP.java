@@ -185,7 +185,11 @@ public class SAP {
         toList.sort(Comparator.comparingInt(toBFS::distTo));
 
         path = new ArrayList<>();
-
+        if (fromList.contains(w)) {
+            ancestor = w;
+            minDistance=fromBFS.distTo(w);
+            return ancestor;
+        }
         int from;
         int to;
         for (Integer integer : fromList) {
