@@ -52,28 +52,30 @@ class SAPSpecification extends Specification {
         SAP sap = new SAP(digraph)
 
         then:
-        sap.length(v, w)
+        sap.length(v, w) == result
 
         where:
         file            | v  | w  | result
         "digraph25.txt" | 2  | 0  | 1
         "digraph25.txt" | 0  | 2  | 1
-        "digraph25.txt" | 1  | 2  | 3
-        "digraph25.txt" | 3  | 4  | 3
-        "digraph25.txt" | 4  | 3  | 3
-        "digraph25.txt" | 5  | 6  | 3
-        "digraph25.txt" | 6  | 5  | 3
-        "digraph25.txt" | 4  | 6  | 5
-        "digraph25.txt" | 1  | 6  | 4
+        "digraph25.txt" | 1  | 2  | 2
+        "digraph25.txt" | 3  | 4  | 2
+        "digraph25.txt" | 4  | 3  | 2
+        "digraph25.txt" | 5  | 6  | 2
+        "digraph25.txt" | 6  | 5  | 2
+        "digraph25.txt" | 4  | 6  | 4
+        "digraph25.txt" | 1  | 6  | 3
         "digraph25.txt" | 17 | 24 | 6
-        "digraph25.txt" | 23 | 24 | 3
-        "digraph25.txt" | 11 | 14 | 8
-        "digraph25.txt" | 17 | 19 | 5
-        "digraph1.txt"  | 2  | 0  | 2
+        "digraph25.txt" | 23 | 24 | 2
+        "digraph25.txt" | 11 | 14 | 7
+        "digraph25.txt" | 17 | 19 | 4
+        "digraph1.txt"  | 2  | 0  | 1
         "digraph1.txt"  | 3  | 11 | 4
         "digraph1.txt"  | 9  | 12 | 3
         "digraph1.txt"  | 7  | 2  | 4
         "digraph1.txt"  | 1  | 6  | -1
+        "digraph1.txt"  | 2  | 6  | -1
+        "digraph2.txt"  | 1  | 3  | 2
     }
 
     def "SAP  ancestor() for Iterables should return a common node between to Iterables"() {
@@ -110,6 +112,7 @@ class SAPSpecification extends Specification {
         "digraph1.txt"                   | 9    | 12 | 5
         "digraph1.txt"                   | 7    | 2  | 0
         "digraph1.txt"                   | 1    | 6  | -1
+        "digraph1.txt"                   | 2    | 6  | -1
         "digraph-ambiguous-ancestor.txt" | 1    | 2  | 2
         "digraph-ambiguous-ancestor.txt" | 0    | 2  | 2
         "digraph-ambiguous-ancestor.txt" | 0    | 10 | 10
@@ -132,9 +135,10 @@ class SAPSpecification extends Specification {
 
     def "SAP constructor should throw Illegal Argument Exception if digraph object is null"() {
         when:
-        SAP sap = new SAP()
+        Digraph digraph = null
+        SAP sap = new SAP(digraph)
         then:
-        sap.getPath(0,1)
+        sap.getPath(0, 1)
         thrown(IllegalArgumentException)
     }
 
