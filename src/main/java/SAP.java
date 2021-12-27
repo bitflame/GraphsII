@@ -184,12 +184,12 @@ public class SAP {
         fromList.sort(Comparator.comparingInt(fromBFS::distTo));
         toList.sort(Comparator.comparingInt(toBFS::distTo));
 
-        path = new ArrayList<>();
+        /* path = new ArrayList<>();
         if (fromList.contains(w)) {
             ancestor = w;
             minDistance = fromBFS.distTo(w);
             return ancestor;
-        }
+        } */
         int from;
         int to;
         int dis = 0;
@@ -202,7 +202,7 @@ public class SAP {
                 from = integer;
                 to = value;
                 /* What if you only check the 2nd list up to the node that is the same distance away from its origin? */
-                if (toBFS.distTo(to) > dis) break;
+                // if (toBFS.distTo(to) > dis) break; No; it breaks outcast test
                 if (from == to) {
                     minDistance = fromBFS.distTo(from) + toBFS.distTo(to);
                     ancestor = from;
