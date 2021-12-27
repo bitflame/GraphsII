@@ -4,6 +4,7 @@ import edu.princeton.cs.algs4.In
 import spock.lang.Specification
 
 class SAPSpecification extends Specification {
+
     def "SAP getPath() Should return the shortest path in the graph"() {
         when:
         Digraph digraph = new Digraph(new In(file))

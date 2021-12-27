@@ -213,30 +213,41 @@ public class SAP {
         return ancestor;
     }
 
-    private int ancestorII(int v, int w) {
+    public int ancestorII(int v, int w) {
         //StdOut.printf("from: %d to: %d v: %d w: %d at the beginning of call to ancestor. ", from, to, v, w);
-        if (!nodeExists(v) || !nodeExists(w)) return ancestor;
         DeluxeBFS fromBFS = new DeluxeBFS(digraphCopy, v);
         DeluxeBFS toBFS = new DeluxeBFS(digraphCopy, w);
         Stack<Integer> fromStack = new Stack<>();
         Stack<Integer> toStack = new Stack<>();
-        for (int i = v, j = w; i != w; i = fromBFS.edgeTo[i], j = toBFS.edgeTo[j]) {
+        path = new ArrayList<>();
+        if (!fromBFS.hasPathTo(w) && !toBFS.hasPathTo(v)) return ancestor;
+        for (int i = v, j = w; i != w && j != v; i = fromBFS.edgeTo[i], j = toBFS.edgeTo[j]) {
             if (toBFS.marked[i]) {
-                // if toBFS has a route to it, then it is ancestor
                 ancestor = i;
+                path.add(i);
                 break;
-            } else if (fromBFS.marked[j]) {
-                ancestor = j;
-                break;
-            } else {
-                fromStack.push(i);
-                toStack.push(j);
             }
+            if (fromBFS.marked[j]) {
+                ancestor = j;
+                path.add(j);
+                break;
+            }
+            fromStack.push(i);
+            toStack.push(j);
         }
-        while (!fromStack.isEmpty()) path.add(fromStack.pop());
-        while (!toStack.isEmpty()) path.add(toStack.pop());
+        while (!fromStack.isEmpty()) {
+            path.add(fromStack.pop());
+        }
+        while (!toStack.isEmpty()) {
+            path.add(toStack.pop());
+        }
         minDistance = path.size();
         return ancestor;
+    }
+
+    public int lengthII(int v, int w) {
+        ancestorII(v,w);
+        return minDistance;
     }
 
     // a common ancestor that participates in the shortest ancestral path; -1 if no such path
