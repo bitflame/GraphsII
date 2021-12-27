@@ -192,15 +192,33 @@ public class SAP {
         }
         int from;
         int to;
+        int dis = 0;
         for (Integer integer : fromList) {
+            dis = fromBFS.distTo(integer);
+            /* this is kind of like a 2sum problem, maybe I think I can use binary search. This algorithm sometimes hits the ancestor
+             with longer path b/c it is first in fromList or b/c of its numerical value. I can keep track of distance until one of
+             the lists runs out, but this algorithm should return the shortest distance at the first match. */
             for (Integer value : toList) {
                 from = integer;
                 to = value;
+                /* What if you only check the 2nd list up to the node that is the same distance away from its origin? */
+                if (toBFS.distTo(to) > dis) break;
                 if (from == to) {
                     minDistance = fromBFS.distTo(from) + toBFS.distTo(to);
                     ancestor = from;
                     path = new ArrayList<>();
                     for (int k : Objects.requireNonNull(fromBFS.pathTo(ancestor))) {
+                        path.add(k);
+                    }
+                    for (int k : Objects.requireNonNull(toBFS.pathTo(ancestor))) {
+                        if (!path.contains(k)) path.add(k);
+                    }
+                    return ancestor;
+                } else if (fromBFS.hasPathTo(to)) {
+                    minDistance = fromBFS.distTo(to)+toBFS.distTo(to);;
+                    ancestor = to;
+                    path = new ArrayList<>();
+                    for (int k:Objects.requireNonNull(toBFS.pathTo(ancestor))) {
                         path.add(k);
                     }
                     for (int k : Objects.requireNonNull(toBFS.pathTo(ancestor))) {
@@ -246,7 +264,7 @@ public class SAP {
     }
 
     public int lengthII(int v, int w) {
-        ancestorII(v,w);
+        ancestorII(v, w);
         return minDistance;
     }
 

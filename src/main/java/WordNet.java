@@ -146,7 +146,7 @@ public class WordNet {
 
     // do unit testing here
     public static void main(String[] args) {
-        System.out.println("using " + args[0] + " and " + args[1] + "files for this round.");
+        System.out.println("using " + args[0] + " and " + args[1] + " files for this round.");
         WordNet wordNet = new WordNet(args[0], args[1]);
         Stopwatch time = new Stopwatch();
         System.out.println("The common ancestor between worm and animal: " + wordNet.sap("worm", "bird"));
@@ -154,7 +154,7 @@ public class WordNet {
         StdOut.println("worm/bird test using RedBlackBST took: "+now);
         System.out.println(wordNet.isNoun("entity"));
         // System.out.println("The common ancestor for worm and bird : " + wordNet.sap("worm", "bird"));
-        // System.out.println("The distance expected between worm and bird is 5, the result: " +wordNet.distance("worm", "bird"));
+        System.out.println("The distance expected between worm and bird is 5, the result: " +wordNet.distance("worm", "bird"));
         StdOut.println("The common ancestor for quadrangle and mountain_devil is:" +
                 wordNet.sap("quadrangle", "mountain_devil"));
         StdOut.println("The distance expected between mountain_devil and quadrangle should be 11, the result: " +
