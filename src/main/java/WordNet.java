@@ -95,6 +95,7 @@ public class WordNet {
 
     // distance between nounA and nounB (defined below )
     public int distance(String nounA, String nounB) {
+        // System.out.println("Here is nounA: "+nounA+" Here is nounB: "+nounB);
         List<Integer> idsOfA = new ArrayList<>();
         List<Integer> idsOfB = new ArrayList<>();
         for (int k : st.keys()) {
@@ -104,7 +105,12 @@ public class WordNet {
             }
         }
         SAP sap = new SAP(digraph);
-
+        /* for (int i:idsOfA) {
+            StdOut.print(" Here are ids of nounA: "+i);
+        }
+        for (int i:idsOfB) {
+            StdOut.println(" Here are ids of nounB: "+i);
+        } */
         return sap.length(idsOfA, idsOfB);// if the nouns are not in the db
     }
 

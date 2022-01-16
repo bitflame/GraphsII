@@ -1,6 +1,4 @@
-import edu.princeton.cs.algs4.Digraph;
-import edu.princeton.cs.algs4.DirectedCycle;
-import edu.princeton.cs.algs4.In;
+import edu.princeton.cs.algs4.*;
 import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.Stack;
 
@@ -8,15 +6,20 @@ import java.io.File;
 import java.util.*;
 
 public class SAP {
-    boolean hasCycle = false;
+    private boolean hasCycle = false;
     private final Digraph digraphCopy;
-    int ancestor = -1;
-    boolean[] onStack;
+    private int ancestor = -1;
+    private boolean[] marked;
     private int minDistance = -1;
-    List<Integer> path;
+    private List<Integer> path;
+    private int from;
+    private int to;
+    private static final int INFINITY = Integer.MAX_VALUE;
+    int n;
+    int[] disTo;
+    int[] edgeTo;
 
     private static class DeluxeBFS {
-        private static final int INFINITY = Integer.MAX_VALUE;
         private final boolean[] marked;
         private final int[] edgeTo;
         private final int[] distTo;
@@ -133,7 +136,6 @@ public class SAP {
     public SAP(Digraph digraph) {
         if (digraph == null) throw new IllegalArgumentException("Digraph value can not be null");
         DirectedCycle cycleFinder = new DirectedCycle(digraph);
-        onStack = new boolean[digraph.V()];
         if (cycleFinder.hasCycle()) {
             hasCycle = true;
         }
@@ -142,12 +144,14 @@ public class SAP {
 
     // length of the shortest ancestral path between v and w; -1 if no such path
     public int length(int v, int w) {
+        // System.out.println("sap triggers the length() with primitive integers ");
         ancestor(v, w);
         return minDistance;
     }
 
     // length of the shortest ancestral path between any vertex in v and any vertex in w; -1 if no such path
     public int length(Iterable<Integer> v, Iterable<Integer> w) {
+        // System.out.println("sap triggers the length() with iterables ");
         if (v == null || w == null)
             throw new IllegalArgumentException("Iterable value to SAP.length() can not be null.");
         ancestor(v, w);
@@ -163,105 +167,107 @@ public class SAP {
     }
 
     // a common ancestor of v and w that participates in a shortest ancestral path; -1 if no such path
-    public int ancestor(int v, int w) {
-        //StdOut.printf("from: %d to: %d v: %d w: %d at the beginning of call to ancestor. ", from, to, v, w);
-        if (!nodeExists(v) || !nodeExists(w)) return ancestor;
-        DeluxeBFS fromBFS = new DeluxeBFS(digraphCopy, v);
-        DeluxeBFS toBFS = new DeluxeBFS(digraphCopy, w);
-        List<Integer> fromList = new ArrayList<>();
-        List<Integer> toList = new ArrayList<>();
-        for (int i = 0; i < digraphCopy.V(); i++) {
-            if (fromBFS.hasPathTo(i)) {
-                fromList.add(i);
-                // System.out.println("Here is the node: "+i+"Here is its distance from fromNode: "+fromBFS.distTo(i));
-            }
-            if (toBFS.hasPathTo(i)) {
-                toList.add(i);
-                // System.out.println("Here is the node: "+i+"Here is its distance to toNode: "+toBFS.distTo(i));
-            }
+    public int ancestor(int from, int to) {
+        if (this.from == from && this.to == to) return ancestor;
+        if (from == to) {
+            minDistance = 0;
+            return ancestor = from;
         }
-        // StdOut.printf("The size of from_list and to_list before sort: %d %d\n",fromList.size(),toList.size());
-        fromList.sort(Comparator.comparingInt(fromBFS::distTo));
-        toList.sort(Comparator.comparingInt(toBFS::distTo));
-
-        /* path = new ArrayList<>();
-        if (fromList.contains(w)) {
-            ancestor = w;
-            minDistance = fromBFS.distTo(w);
+        ancestor = -1;
+        minDistance = -1;
+        this.from = from;
+        this.to = to;
+        if ((digraphCopy.indegree(from) == 0 && digraphCopy.outdegree(from) == 0) || (digraphCopy.indegree(to) == 0 &&
+                digraphCopy.outdegree(to) == 0))
             return ancestor;
-        } */
-        int from;
-        int to;
-        for (Integer integer : fromList) {
-            /* this is kind of like a 2sum problem, maybe I think I can use binary search. This algorithm sometimes hits the ancestor
-             with longer path b/c it is first in fromList or b/c of its numerical value. I can keep track of distance until one of
-             the lists runs out, but this algorithm should return the shortest distance at the first match. */
-            for (Integer value : toList) {
-                from = integer;
-                to = value;
-                if (from == to) {
-                    minDistance = fromBFS.distTo(from) + toBFS.distTo(to);
-                    ancestor = from;
-                    path = new ArrayList<>();
-                    for (int k : Objects.requireNonNull(fromBFS.pathTo(ancestor))) {
-                        path.add(k);
+        n = digraphCopy.V();
+        marked = new boolean[n];
+        edgeTo = new int[n];
+        disTo = new int[n];
+        for (int i = 0; i < n; i++) {
+            disTo[i] = INFINITY;
+            edgeTo[i] = -1;
+        }
+        lockStepBFS(from, to);
+        return ancestor;
+    }
+
+    private void lockStepBFS(int f, int t) {
+        Queue<Integer> queue = new Queue<>();
+        queue.enqueue(f);
+        queue.enqueue(t);
+        marked[f] = true;
+        // path.push(f);
+        Stack<Integer> fromPath = new Stack<>();
+        Stack<Integer> toPath = new Stack<>();
+        fromPath.push(f);
+        disTo[f] = 0;
+        marked[t] = true;
+        // path.push(t);
+        toPath.push(to);
+        minDistance = 1;
+        disTo[t] = 0;
+        int w = -1;
+        int prevMinDistance = INFINITY;
+        minDistance = INFINITY;
+        while (!queue.isEmpty()) {
+            int v = queue.dequeue();
+            if (!queue.isEmpty()) w = queue.dequeue();
+            for (int j : digraphCopy.adj(v)) {
+                if (!marked[j]) {
+                    edgeTo[j] = v;
+                    marked[j] = true;
+                    disTo[j] = disTo[v] + 1;
+                    queue.enqueue(j);
+                } else {
+                    /* Try walking the edgeTo back to f as soon as you have a match here; you know one of them
+                     * is v, and the other is w even if only w is in edgeTo since we do not update edgeTo above because
+                     * it is already marked. Same for the section below and that should avoid all the if/else statements
+                     *  */
+                    ancestor = j;
+                    if (j == t) {
+                        minDistance = disTo[v] + 1;
+                        System.out.println(" j == t rule hit for pairs: " + " " + f + " " + t);
+                        return;
+                    } else if (j == w && !hasCycle) {
+                        minDistance = disTo[v] + disTo[w] + 1;
+                        System.out.println("j == w without cycle rule hit for pairs: " + " " + f + " " + t);
+                        return;
+                    } else if (j == w && hasCycle) {
+                        minDistance = disTo[v] + 1;
+                        System.out.println(" j == w with cycle rule hit for pairs: " + " " + f + " " + t);
+                        return;
                     }
-                    for (int k : Objects.requireNonNull(toBFS.pathTo(ancestor))) {
-                        if (!path.contains(k)) path.add(k);
+                    minDistance = 0;
+                    minDistance += disTo[j] + disTo[v];
+                    return;
+                }
+            }
+
+            for (int k : digraphCopy.adj(w)) {
+                if (!marked[k]) {
+                    edgeTo[k] = w;
+                    marked[k] = true;
+                    disTo[k] = disTo[w] + 1;
+                    queue.enqueue(k);
+                } else {
+                    ancestor = k;
+                    if (k == f && w == t) {
+                        minDistance = 1;
+                        System.out.println("k = f rule hit for pairs: " + " " + f + " " + t);
+                        return;
+                    } else if (k == v) {
+                        System.out.println("k = v rule hit for pairs: " + " " + f + " " + t);
+                        minDistance = 0;
+                        minDistance += disTo[k] + disTo[w];
+                        return;
                     }
-                    return ancestor;
-                } else if (fromBFS.hasPathTo(to)) {
-                    minDistance = fromBFS.distTo(to)+toBFS.distTo(to);;
-                    ancestor = to;
-                    path = new ArrayList<>();
-                    for (int k:Objects.requireNonNull(toBFS.pathTo(ancestor))) {
-                        path.add(k);
-                    }
-                    for (int k : Objects.requireNonNull(toBFS.pathTo(ancestor))) {
-                        if (!path.contains(k)) path.add(k);
-                    }
-                    return ancestor;
+                    minDistance = 0;
+                    minDistance += disTo[k] + disTo[w] + 1;
+                    return;
                 }
             }
         }
-        return ancestor;
-    }
-
-    public int ancestorII(int v, int w) {
-        //StdOut.printf("from: %d to: %d v: %d w: %d at the beginning of call to ancestor. ", from, to, v, w);
-        DeluxeBFS fromBFS = new DeluxeBFS(digraphCopy, v);
-        DeluxeBFS toBFS = new DeluxeBFS(digraphCopy, w);
-        Stack<Integer> fromStack = new Stack<>();
-        Stack<Integer> toStack = new Stack<>();
-        path = new ArrayList<>();
-        if (!fromBFS.hasPathTo(w) && !toBFS.hasPathTo(v)) return ancestor;
-        for (int i = v, j = w; i != w && j != v; i = fromBFS.edgeTo[i], j = toBFS.edgeTo[j]) {
-            if (toBFS.marked[i]) {
-                ancestor = i;
-                path.add(i);
-                break;
-            }
-            if (fromBFS.marked[j]) {
-                ancestor = j;
-                path.add(j);
-                break;
-            }
-            fromStack.push(i);
-            toStack.push(j);
-        }
-        while (!fromStack.isEmpty()) {
-            path.add(fromStack.pop());
-        }
-        while (!toStack.isEmpty()) {
-            path.add(toStack.pop());
-        }
-        minDistance = path.size();
-        return ancestor;
-    }
-
-    public int lengthII(int v, int w) {
-        ancestorII(v, w);
-        return minDistance;
     }
 
     // a common ancestor that participates in the shortest ancestral path; -1 if no such path
@@ -270,7 +276,7 @@ public class SAP {
             throw new IllegalArgumentException("Iterable value to SAP.ancestor() can not be null.");
         int distance = Integer.MAX_VALUE;
         int currentAncestor = -1;
-
+        // System.out.printf("sap triggers ancestor() with iterables ");
         for (int i : v) {
             for (int j : w) {
                 // StdOut.printf("Calling ancestor(%d, %d) ", i, j);
@@ -286,7 +292,7 @@ public class SAP {
         return ancestor;
     }
 
-    List<Integer> getPath(int from, int to) {
+    private List<Integer> getPath(int from, int to) {
         ancestor(from, to);
         Collections.sort(path);
         return path;

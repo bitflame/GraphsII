@@ -11,5 +11,11 @@ public class Digraph3Test {
             System.out.printf(" the value of length() between 14 and 8 is : %d\n", sap.length(14, 8));
             throw new AssertionError("but it should be 4");
         }
+        int distance = sap.length(10, 9);
+        if (distance != 1)
+            throw new AssertionError("The first time running length() for Digraph3Test. The value of " +
+                    "length(10, 9) should be 1 but it is: " + distance);
+        distance = sap.length(12, 13);
+        if (distance != 4) throw new AssertionError("The length between 12 and 13 should be 4, but it is: " + distance);
     }
 }
