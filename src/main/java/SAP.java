@@ -252,14 +252,17 @@ public class SAP {
                     queue.enqueue(k);
                 } else {
                     ancestor = k;
-                    if (k == f && w == t) {
-                        minDistance = 1;
+                    if (k == f) {
+                        minDistance = disTo[w] + 1;
                         System.out.println("k = f rule hit for pairs: " + " " + f + " " + t);
                         return;
-                    } else if (k == v) {
-                        System.out.println("k = v rule hit for pairs: " + " " + f + " " + t);
-                        minDistance = 0;
-                        minDistance += disTo[k] + disTo[w];
+                    } else if (k == v && !hasCycle) {
+                        System.out.println("k = v without cycle rule hit for pairs: " + " " + f + " " + t);
+                        minDistance = disTo[k] + disTo[w] + 1;
+                        return;
+                    } else if (k == v && hasCycle) {
+                        minDistance = disTo[w] + disTo[k];
+                        System.out.println("k == v with cycle rule hit for pairs: " + " " + f + " " + t);
                         return;
                     }
                     minDistance = 0;
