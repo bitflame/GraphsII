@@ -194,31 +194,28 @@ public class SAP {
 
     private void lockStepBFS(int f, int t) {
         Queue<Integer> queue = new Queue<>();
+        Queue<Integer> fromQueue = new Queue<>();
+        Queue<Integer> toQueue = new Queue<>();
         queue.enqueue(f);
+        fromQueue.enqueue(f);
         queue.enqueue(t);
+        toQueue.enqueue(t);
         marked[f] = true;
-        // path.push(f);
-        Stack<Integer> fromPath = new Stack<>();
-        Stack<Integer> toPath = new Stack<>();
-        fromPath.push(f);
         disTo[f] = 0;
         marked[t] = true;
-        // path.push(t);
-        toPath.push(to);
-        minDistance = 1;
         disTo[t] = 0;
         int w = -1;
-        int prevMinDistance = INFINITY;
+        int v = -1;
         minDistance = INFINITY;
         while (!queue.isEmpty()) {
-            int v = queue.dequeue();
-            if (!queue.isEmpty()) w = queue.dequeue();
+            if (!fromQueue.isEmpty()) v = fromQueue.dequeue();
+            if (!toQueue.isEmpty()) w = toQueue.dequeue();
             for (int j : digraphCopy.adj(v)) {
                 if (!marked[j]) {
                     edgeTo[j] = v;
                     marked[j] = true;
                     disTo[j] = disTo[v] + 1;
-                    queue.enqueue(j);
+                    fromQueue.enqueue(j);
                 } else {
                     /* Try walking the edgeTo back to f as soon as you have a match here; you know one of them
                      * is v, and the other is w even if only w is in edgeTo since we do not update edgeTo above because
@@ -249,7 +246,7 @@ public class SAP {
                     edgeTo[k] = w;
                     marked[k] = true;
                     disTo[k] = disTo[w] + 1;
-                    queue.enqueue(k);
+                    toQueue.enqueue(k);
                 } else {
                     ancestor = k;
                     if (k == f) {
