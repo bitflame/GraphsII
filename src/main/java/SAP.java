@@ -193,12 +193,9 @@ public class SAP {
     }
 
     private void lockStepBFS(int f, int t) {
-        Queue<Integer> queue = new Queue<>();
         Queue<Integer> fromQueue = new Queue<>();
         Queue<Integer> toQueue = new Queue<>();
-        queue.enqueue(f);
         fromQueue.enqueue(f);
-        queue.enqueue(t);
         toQueue.enqueue(t);
         marked[f] = true;
         disTo[f] = 0;
@@ -207,7 +204,7 @@ public class SAP {
         int w = -1;
         int v = -1;
         minDistance = INFINITY;
-        while (!queue.isEmpty()) {
+        while (!fromQueue.isEmpty() || !toQueue.isEmpty()) {
             if (!fromQueue.isEmpty()) v = fromQueue.dequeue();
             if (!toQueue.isEmpty()) w = toQueue.dequeue();
             for (int j : digraphCopy.adj(v)) {
@@ -217,32 +214,34 @@ public class SAP {
                     disTo[j] = disTo[v] + 1;
                     fromQueue.enqueue(j);
                 } else {
-
                     ancestor = j;
                     if (j == t) {
                         minDistance = disTo[v] + 1;
                         System.out.println(" j == t rule hit for pairs: " + " " + f + " " + t);
                         return;
                     } else if (j == w) {
-                        /* If you get here, the other end has already been here so the minimum distance is how many hops
-                        * the other guy taken. You have to zero the hops you have taken */
-                        // minDistance = disTo[v] + disTo[w] + 1;
-
+                        while (!toQueue.isEmpty()) {
+                            int temp = toQueue.dequeue();
+                            if (temp == from) {
+                                minDistance = disTo[w] + 1;
+                            }
+                        }
+                        for(int i: digraphCopy.adj(j)){
+                            if (i==f) {
+                                minDistance = disTo[w] + 1;
+                                return;
+                            }
+                        }
+                        minDistance = disTo[w] + disTo[v];
                         System.out.println("j == w without cycle rule hit for pairs: " + " " + f + " " + t);
-                        return;
-                    } else if (j == w) {
-                        // minDistance = disTo[v] + 1;
-                        minDistance = disTo[j] + disTo[v];
-                        System.out.println(" j == w with cycle rule hit for pairs: " + " " + f + " " + t);
                         return;
                     }
                     minDistance = 0;
                     System.out.println(" Default rule hit in fromQueue for pairs: " + " " + f + " " + t);
-                    minDistance += disTo[w] + disTo[v];
+                    minDistance = disTo[w] + disTo[v];
                     return;
                 }
             }
-
             for (int k : digraphCopy.adj(w)) {
                 if (!marked[k]) {
                     edgeTo[k] = w;
@@ -250,22 +249,23 @@ public class SAP {
                     disTo[k] = disTo[w] + 1;
                     toQueue.enqueue(k);
                 } else {
-                    ancestor = k;
                     if (k == f) {
+                        ancestor = k;
                         minDistance = disTo[w] + 1;
                         System.out.println("k = f rule hit for pairs: " + " " + f + " " + t);
                         return;
                     } else if (k == v) {
+                        ancestor = k;
+                        while (!fromQueue.isEmpty()) {
+                            int temp = fromQueue.dequeue();
+                            if (temp == to) {
+                                minDistance = disTo[v] + 1;
+                                System.out.println("k = v with cycle rule hit for pairs: " + " " + f + " " + t);
+                            }
+                        }
                         System.out.println("k = v without cycle rule hit for pairs: " + " " + f + " " + t);
                         //minDistance = disTo[k] + disTo[w] + 1;
-                        minDistance = disTo[v] + disTo[w] + 1;
-                        return;
-                    } else if (k == v) {
-                        minDistance = disTo[w] + disTo[k];
-                        /* I could ue disTo[v] also for the test instance I was
-                        looking at, and get the same result in case down the road this will help pass a test */
-                        // minDistance = disTo[w]+1;
-                        System.out.println("k == v with cycle rule hit for pairs: " + " " + f + " " + t);
+                        minDistance = disTo[v] + disTo[w];
                         return;
                     }
                     minDistance = 0;
