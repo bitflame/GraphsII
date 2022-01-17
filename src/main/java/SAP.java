@@ -258,10 +258,12 @@ public class SAP {
                         return;
                     } else if (k == v && !hasCycle) {
                         System.out.println("k = v without cycle rule hit for pairs: " + " " + f + " " + t);
-                        minDistance = disTo[k] + disTo[w] + 1;
+                        //minDistance = disTo[k] + disTo[w] + 1;
+                        minDistance = disTo[v] + disTo[w] + 1;
                         return;
                     } else if (k == v && hasCycle) {
-                        minDistance = disTo[w] + disTo[k];
+                        minDistance = disTo[w] + disTo[k];/* I could ue disTo[v] also for the test instance I was
+                        looking at, and get the same result in case down the road this will help pass a test */
                         System.out.println("k == v with cycle rule hit for pairs: " + " " + f + " " + t);
                         return;
                     }
