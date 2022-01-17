@@ -217,26 +217,28 @@ public class SAP {
                     disTo[j] = disTo[v] + 1;
                     fromQueue.enqueue(j);
                 } else {
-                    /* Try walking the edgeTo back to f as soon as you have a match here; you know one of them
-                     * is v, and the other is w even if only w is in edgeTo since we do not update edgeTo above because
-                     * it is already marked. Same for the section below and that should avoid all the if/else statements
-                     *  */
+
                     ancestor = j;
                     if (j == t) {
                         minDistance = disTo[v] + 1;
                         System.out.println(" j == t rule hit for pairs: " + " " + f + " " + t);
                         return;
-                    } else if (j == w && !hasCycle) {
-                        minDistance = disTo[v] + disTo[w] + 1;
+                    } else if (j == w) {
+                        /* If you get here, the other end has already been here so the minimum distance is how many hops
+                        * the other guy taken. You have to zero the hops you have taken */
+                        // minDistance = disTo[v] + disTo[w] + 1;
+
                         System.out.println("j == w without cycle rule hit for pairs: " + " " + f + " " + t);
                         return;
-                    } else if (j == w && hasCycle) {
-                        minDistance = disTo[v] + 1;
+                    } else if (j == w) {
+                        // minDistance = disTo[v] + 1;
+                        minDistance = disTo[j] + disTo[v];
                         System.out.println(" j == w with cycle rule hit for pairs: " + " " + f + " " + t);
                         return;
                     }
                     minDistance = 0;
-                    minDistance += disTo[j] + disTo[v];
+                    System.out.println(" Default rule hit in fromQueue for pairs: " + " " + f + " " + t);
+                    minDistance += disTo[w] + disTo[v];
                     return;
                 }
             }
@@ -253,19 +255,23 @@ public class SAP {
                         minDistance = disTo[w] + 1;
                         System.out.println("k = f rule hit for pairs: " + " " + f + " " + t);
                         return;
-                    } else if (k == v && !hasCycle) {
+                    } else if (k == v) {
                         System.out.println("k = v without cycle rule hit for pairs: " + " " + f + " " + t);
                         //minDistance = disTo[k] + disTo[w] + 1;
                         minDistance = disTo[v] + disTo[w] + 1;
                         return;
-                    } else if (k == v && hasCycle) {
-                        minDistance = disTo[w] + disTo[k];/* I could ue disTo[v] also for the test instance I was
+                    } else if (k == v) {
+                        minDistance = disTo[w] + disTo[k];
+                        /* I could ue disTo[v] also for the test instance I was
                         looking at, and get the same result in case down the road this will help pass a test */
+                        // minDistance = disTo[w]+1;
                         System.out.println("k == v with cycle rule hit for pairs: " + " " + f + " " + t);
                         return;
                     }
                     minDistance = 0;
                     minDistance += disTo[k] + disTo[w] + 1;
+                    System.out.println(" Default rule hit in toQueue for pairs: " + " " + f + " " + t);
+                    // minDistance += disTo[v] + disTo[w] + 1;
                     return;
                 }
             }
