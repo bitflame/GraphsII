@@ -220,9 +220,10 @@ public class SAP {
                         System.out.println(" j == t rule hit for pairs: " + " " + f + " " + t);
                         return;
                     } else if (j == w) {
+                        /* If I have hit a loop, either I will get back to my source in one or few steps */
                         while (!toQueue.isEmpty()) {
                             int temp = toQueue.dequeue();
-                            if (temp == from) {
+                            if (temp == f) {
                                 minDistance = disTo[w] + 1;
                             }
                         }
