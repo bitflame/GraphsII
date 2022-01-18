@@ -217,7 +217,7 @@ public class SAP {
                     ancestor = j;
                     if (j == t) {
                         minDistance = disTo[v] + 1;
-                        System.out.println(" j == t rule hit for pairs: " + " " + f + " " + t);
+                        // System.out.println(" j == t rule hit for pairs: " + " " + f + " " + t);
                         return;
                     } else if (j == w) {
                         /* If I have hit a loop, either I will get back to my source in one or few steps */
@@ -225,22 +225,22 @@ public class SAP {
                             int temp = toQueue.dequeue();
                             if (temp == f) {
                                 minDistance = disTo[w] + 1;
-                                System.out.println("j = w with cycle rule hit a node in the queue for pairs: " + " " + f + " " + t);
+                                // System.out.println("j = w with cycle rule hit a node in the queue for pairs: " + " " + f + " " + t);
                             }
                         }
                         for(int i: digraphCopy.adj(j)){
                             if (i==f) {
                                 minDistance = disTo[w] + 1;
-                                System.out.println("j = w with cycle rule hit a node not in the queue for pairs: " + " " + f + " " + t);
+                                // System.out.println("j = w with cycle rule hit a node not in the queue for pairs: " + " " + f + " " + t);
                                 return;
                             }
                         }
                         minDistance = disTo[w] + disTo[v] + 1;
-                        System.out.println("j == w without cycle rule hit for pairs: " + " " + f + " " + t);
+                        // System.out.println("j == w without cycle rule hit for pairs: " + " " + f + " " + t);
                         return;
                     }
                     minDistance = 0;
-                    System.out.println(" Default rule hit in fromQueue for pairs: " + " " + f + " " + t);
+                    // System.out.println(" Default rule hit in fromQueue for pairs: " + " " + f + " " + t);
                     minDistance = disTo[w] + disTo[v];
                     return;
                 }
@@ -255,32 +255,31 @@ public class SAP {
                     ancestor = k;
                     if (k == f) {
                         minDistance = disTo[w] + 1;
-                        System.out.println("k = f rule hit for pairs: " + " " + f + " " + t);
+                        // System.out.println("k = f rule hit for pairs: " + " " + f + " " + t);
                         return;
                     } else if (k == v) {
                         while (!fromQueue.isEmpty()) {
                             int temp = fromQueue.dequeue();
                             if (temp == to) {
                                 minDistance = disTo[v] + 1;
-                                System.out.println("k = v with cycle rule hit a node in the queue for pairs: " + " " + f + " " + t);
+                                // System.out.println("k = v with cycle rule hit a node in the queue for pairs: " + " " + f + " " + t);
                             }
                         }
                         for(int i: digraphCopy.adj(k)){
                             if (i==t) {
                                 minDistance = disTo[w] + 1;
-                                System.out.println("k = v with cycle rule hit a node not in the queue for pairs: " + " " + f + " " + t);
+                                // System.out.println("k = v with cycle rule hit a node not in the queue for pairs: " + " " + f + " " + t);
                                 return;
                             }
                         }
-                        System.out.println("k = v without cycle rule hit for pairs: " + " " + f + " " + t);
+                        // System.out.println("k = v without cycle rule hit for pairs: " + " " + f + " " + t);
                         //minDistance = disTo[k] + disTo[w] + 1;
                         minDistance = disTo[v] + disTo[w] + 1;
                         return;
                     }
                     minDistance = 0;
                     minDistance += disTo[k] + disTo[w] + 1;
-                    System.out.println(" Default rule hit in toQueue for pairs: " + " " + f + " " + t);
-                    // minDistance += disTo[v] + disTo[w] + 1;
+                    // System.out.println(" Default rule hit in toQueue for pairs: " + " " + f + " " + t);
                     return;
                 }
             }
