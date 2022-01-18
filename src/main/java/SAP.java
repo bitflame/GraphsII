@@ -225,15 +225,17 @@ public class SAP {
                             int temp = toQueue.dequeue();
                             if (temp == f) {
                                 minDistance = disTo[w] + 1;
+                                System.out.println("j = w with cycle rule hit a node in the queue for pairs: " + " " + f + " " + t);
                             }
                         }
                         for(int i: digraphCopy.adj(j)){
                             if (i==f) {
                                 minDistance = disTo[w] + 1;
+                                System.out.println("j = w with cycle rule hit a node not in the queue for pairs: " + " " + f + " " + t);
                                 return;
                             }
                         }
-                        minDistance = disTo[w] + disTo[v];
+                        minDistance = disTo[w] + disTo[v] + 1;
                         System.out.println("j == w without cycle rule hit for pairs: " + " " + f + " " + t);
                         return;
                     }
@@ -250,23 +252,29 @@ public class SAP {
                     disTo[k] = disTo[w] + 1;
                     toQueue.enqueue(k);
                 } else {
+                    ancestor = k;
                     if (k == f) {
-                        ancestor = k;
                         minDistance = disTo[w] + 1;
                         System.out.println("k = f rule hit for pairs: " + " " + f + " " + t);
                         return;
                     } else if (k == v) {
-                        ancestor = k;
                         while (!fromQueue.isEmpty()) {
                             int temp = fromQueue.dequeue();
                             if (temp == to) {
                                 minDistance = disTo[v] + 1;
-                                System.out.println("k = v with cycle rule hit for pairs: " + " " + f + " " + t);
+                                System.out.println("k = v with cycle rule hit a node in the queue for pairs: " + " " + f + " " + t);
+                            }
+                        }
+                        for(int i: digraphCopy.adj(k)){
+                            if (i==t) {
+                                minDistance = disTo[w] + 1;
+                                System.out.println("k = v with cycle rule hit a node not in the queue for pairs: " + " " + f + " " + t);
+                                return;
                             }
                         }
                         System.out.println("k = v without cycle rule hit for pairs: " + " " + f + " " + t);
                         //minDistance = disTo[k] + disTo[w] + 1;
-                        minDistance = disTo[v] + disTo[w];
+                        minDistance = disTo[v] + disTo[w] + 1;
                         return;
                     }
                     minDistance = 0;
