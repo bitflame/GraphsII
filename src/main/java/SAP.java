@@ -145,7 +145,8 @@ public class SAP {
     // length of the shortest ancestral path between v and w; -1 if no such path
     public int length(int v, int w) {
         // System.out.println("sap triggers the length() with primitive integers ");
-        ancestor(v, w);
+        // ancestor(v, w);
+        getAncestor(v, w);
         return minDistance;
     }
 
@@ -192,6 +193,36 @@ public class SAP {
         return ancestor;
     }
 
+    public int getAncestor(int v, int w) {
+        if (this.from == v && this.to == w) return ancestor;
+        if (v == w) {
+            minDistance = 0;
+            return ancestor = v;
+        }
+        ancestor = -1;
+        minDistance = -1;
+        this.from = v;
+        this.to = w;
+        if ((digraphCopy.indegree(from) == 0 && digraphCopy.outdegree(from) == 0) || (digraphCopy.indegree(to) == 0 &&
+                digraphCopy.outdegree(to) == 0))
+            return ancestor;
+        n = digraphCopy.V();
+        marked = new boolean[n];
+        edgeTo = new int[n];
+        disTo = new int[n];
+        for (int i = 0; i < n; i++) {
+            disTo[i] = INFINITY;
+            edgeTo[i] = -1;
+        }
+        BreadthFirstDirectedPaths breadthFirstDirectedPathsFrom = new BreadthFirstDirectedPaths(digraphCopy, from);
+        BreadthFirstDirectedPaths breadthFirstDirectedPathsTo = new BreadthFirstDirectedPaths(digraphCopy, to);
+        minDistance = Math.min(breadthFirstDirectedPathsFrom.distTo(to), breadthFirstDirectedPathsTo.distTo(from));
+        /* the first node that has a route is the ancestor - traversing nodes from source to destination start at source
+        and traverse edgeTo of the destination's breadth first search */
+        lockStepBFS(v, w);
+        return ancestor;
+    }
+
     private void lockStepBFS(int f, int t) {
         Queue<Integer> fromQueue = new Queue<>();
         Queue<Integer> toQueue = new Queue<>();
@@ -203,7 +234,6 @@ public class SAP {
         disTo[t] = 0;
         int w = -1;
         int v = -1;
-        minDistance = INFINITY;
         while (!fromQueue.isEmpty() || !toQueue.isEmpty()) {
             if (!fromQueue.isEmpty()) v = fromQueue.dequeue();
             if (!toQueue.isEmpty()) w = toQueue.dequeue();
@@ -215,22 +245,6 @@ public class SAP {
                     fromQueue.enqueue(j);
                 } else {
                     ancestor = j;
-                    minDistance = 0;
-                    if (edgeTo[j] != -1) {
-                        while (edgeTo[j] != t) {
-                            minDistance++;
-                            j = edgeTo[j];
-                        }
-                        minDistance++;
-                    }
-                    if (edgeTo[v] != -1) {
-                        minDistance++;
-                        while (edgeTo[v] != f) {
-                            minDistance++;
-                            v = edgeTo[v];
-                        }
-                        minDistance++;
-                    }
                 }
             }
             for (int k : digraphCopy.adj(w)) {
@@ -241,27 +255,8 @@ public class SAP {
                     toQueue.enqueue(k);
                 } else {
                     ancestor = k;
-                    minDistance = 0;
-                    if (edgeTo[k] != -1) {
-                        while (edgeTo[k] != f) {
-                            minDistance++;
-                            k = edgeTo[k];
-                        }
-                        minDistance++;
-                    }
-                    if (edgeTo[w] != -1) {
-                        minDistance++;
-                        while (edgeTo[w] != t) {
-                            minDistance++;
-                            w = edgeTo[w];
-                        }
-                        minDistance++;
-                    }
                 }
             }
-        }
-        if (ancestor == t && v == f) {
-            minDistance = 1;
         }
     }
 
