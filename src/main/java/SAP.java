@@ -215,34 +215,22 @@ public class SAP {
                     fromQueue.enqueue(j);
                 } else {
                     ancestor = j;
-                    if (j == t) {
-                        minDistance = disTo[v] + 1;
-                        // System.out.println(" j == t rule hit for pairs: " + " " + f + " " + t);
-                        return;
-                    } else if (j == w) {
-                        /* If I have hit a loop, either I will get back to my source in one or few steps */
-                        while (!toQueue.isEmpty()) {
-                            int temp = toQueue.dequeue();
-                            if (temp == f) {
-                                minDistance = disTo[w] + 1;
-                                // System.out.println("j = w with cycle rule hit a node in the queue for pairs: " + " " + f + " " + t);
-                            }
-                        }
-                        for(int i: digraphCopy.adj(j)){
-                            if (i==f) {
-                                minDistance = disTo[w] + 1;
-                                // System.out.println("j = w with cycle rule hit a node not in the queue for pairs: " + " " + f + " " + t);
-                                return;
-                            }
-                        }
-                        minDistance = disTo[w] + disTo[v] + 1;
-                        // System.out.println("j == w without cycle rule hit for pairs: " + " " + f + " " + t);
-                        return;
-                    }
                     minDistance = 0;
-                    // System.out.println(" Default rule hit in fromQueue for pairs: " + " " + f + " " + t);
-                    minDistance = disTo[w] + disTo[v];
-                    return;
+                    if (edgeTo[j] != -1) {
+                        while (edgeTo[j] != t) {
+                            minDistance++;
+                            j = edgeTo[j];
+                        }
+                        minDistance++;
+                    }
+                    if (edgeTo[v] != -1) {
+                        minDistance++;
+                        while (edgeTo[v] != f) {
+                            minDistance++;
+                            v = edgeTo[v];
+                        }
+                        minDistance++;
+                    }
                 }
             }
             for (int k : digraphCopy.adj(w)) {
@@ -253,36 +241,27 @@ public class SAP {
                     toQueue.enqueue(k);
                 } else {
                     ancestor = k;
-                    if (k == f) {
-                        minDistance = disTo[w] + 1;
-                        // System.out.println("k = f rule hit for pairs: " + " " + f + " " + t);
-                        return;
-                    } else if (k == v) {
-                        while (!fromQueue.isEmpty()) {
-                            int temp = fromQueue.dequeue();
-                            if (temp == to) {
-                                minDistance = disTo[v] + 1;
-                                // System.out.println("k = v with cycle rule hit a node in the queue for pairs: " + " " + f + " " + t);
-                            }
-                        }
-                        for(int i: digraphCopy.adj(k)){
-                            if (i==t) {
-                                minDistance = disTo[w] + 1;
-                                // System.out.println("k = v with cycle rule hit a node not in the queue for pairs: " + " " + f + " " + t);
-                                return;
-                            }
-                        }
-                        // System.out.println("k = v without cycle rule hit for pairs: " + " " + f + " " + t);
-                        //minDistance = disTo[k] + disTo[w] + 1;
-                        minDistance = disTo[v] + disTo[w] + 1;
-                        return;
-                    }
                     minDistance = 0;
-                    minDistance += disTo[k] + disTo[w] + 1;
-                    // System.out.println(" Default rule hit in toQueue for pairs: " + " " + f + " " + t);
-                    return;
+                    if (edgeTo[k] != -1) {
+                        while (edgeTo[k] != f) {
+                            minDistance++;
+                            k = edgeTo[k];
+                        }
+                        minDistance++;
+                    }
+                    if (edgeTo[w] != -1) {
+                        minDistance++;
+                        while (edgeTo[w] != t) {
+                            minDistance++;
+                            w = edgeTo[w];
+                        }
+                        minDistance++;
+                    }
                 }
             }
+        }
+        if (ancestor == t && v == f) {
+            minDistance = 1;
         }
     }
 
