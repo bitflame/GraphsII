@@ -36,20 +36,20 @@ public class GetAncestorTestDigraph3 {
         ancestor = sap.getAncestor(0, 13);
         if (ancestor != 0)
             throw new AssertionError("The ancestor between 0 and 13 should be 0, but it is: " + ancestor);
-        distance = sap.length(13, 12);
-        if (distance != 4) throw new AssertionError("The length between 13 and 13 should be 4, but it is: " + distance);
-        ancestor = sap.getAncestor(13, 12);
-        if (ancestor != 11)
-            throw new AssertionError("The ancestor between 13 and 12 should be 11, but it is" + ancestor);
         distance = sap.length(12, 13);
         if (distance != 4) throw new AssertionError("The length between 12 and 13 should be 4, but it is: " + distance);
         ancestor = sap.getAncestor(12, 13);
         if (ancestor != 11)
             throw new AssertionError("The ancestor between 12, and 13 should be 11, but it is: " + ancestor);
+        distance = sap.length(13, 12);
+        if (distance != 4) throw new AssertionError("The length between 13 and 13 should be 4, but it is: " + distance);
+        ancestor = sap.getAncestor(13, 12);
+        if (ancestor != 12)
+            throw new AssertionError("The ancestor between 13 and 12 should be 11, but it is " + ancestor);
         distance = sap.length(7, 10);
         if (distance != 3) throw new AssertionError("The length between 10, and 7 shuld be 3, but it is: " + distance);
         ancestor = sap.getAncestor(7, 10);
-        if (ancestor != 8)
+        if (ancestor != 10)
             throw new AssertionError("The ancestor between 7, and 10 should be 8, but it is: " + ancestor);
         distance = sap.length(10, 7);
         if (distance != 3) throw new AssertionError("The length between 10, and 7 shuld be 3, but it is: " + distance);

@@ -217,6 +217,7 @@ public class SAP {
         BreadthFirstDirectedPaths breadthFirstDirectedPathsFrom = new BreadthFirstDirectedPaths(digraphCopy, from);
         BreadthFirstDirectedPaths breadthFirstDirectedPathsTo = new BreadthFirstDirectedPaths(digraphCopy, to);
         minDistance = Math.min(breadthFirstDirectedPathsFrom.distTo(to), breadthFirstDirectedPathsTo.distTo(from));
+        minDistance = (minDistance == INFINITY) ? -1 : minDistance;
         /* the first node that has a route is the ancestor - traversing nodes from source to destination start at source
         and traverse edgeTo of the destination's breadth first search */
         lockStepBFS(v, w);
@@ -245,8 +246,10 @@ public class SAP {
                     fromQueue.enqueue(j);
                 } else {
                     ancestor = j;
+                    break;
                 }
             }
+            if (ancestor != -1) break;
             for (int k : digraphCopy.adj(w)) {
                 if (!marked[k]) {
                     edgeTo[k] = w;
@@ -255,8 +258,10 @@ public class SAP {
                     toQueue.enqueue(k);
                 } else {
                     ancestor = k;
+                    break;
                 }
             }
+            if (ancestor != -1) break;
         }
     }
 
