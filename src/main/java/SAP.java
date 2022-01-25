@@ -1,136 +1,27 @@
-import edu.princeton.cs.algs4.*;
 import edu.princeton.cs.algs4.Queue;
-import edu.princeton.cs.algs4.Stack;
+import edu.princeton.cs.algs4.Digraph;
+import edu.princeton.cs.algs4.DirectedCycle;
+import edu.princeton.cs.algs4.In;
 
-import java.io.File;
-import java.util.*;
+import java.util.Iterator;
 
 public class SAP {
     private boolean hasCycle = false;
-    private final Digraph digraphCopy;
-    private int ancestor = -1;
-    private boolean[] marked;
-    private int minDistance = -1;
-    private List<Integer> path;
+    private final Digraph digraphDFCopy;
+    private int ancestor;
+    private int minDistance;
     private int from;
     private int to;
+    private int n;
+    private boolean[] fromMarked;
+    private boolean[] toMarked;
+    private int[] fromEdgeTo;
+    private int[] toEdgeTo;
+    private int[] fromDistTo;
+    private int[] toDistTo;
     private static final int INFINITY = Integer.MAX_VALUE;
-    int n;
-    int[] disTo;
-    int[] edgeTo;
-
-    private static class DeluxeBFS {
-        private final boolean[] marked;
-        private final int[] edgeTo;
-        private final int[] distTo;
-
-        public DeluxeBFS(Digraph G, int s) {
-            marked = new boolean[G.V()];
-            distTo = new int[G.V()];
-            edgeTo = new int[G.V()];
-
-            for (int v = 0; v < G.V(); v++)
-                distTo[v] = INFINITY;
-            validateVertex(s);
-            bfs(G, s);
-        }
-
-        public DeluxeBFS(Digraph G, Iterable<Integer> sources) {
-            marked = new boolean[G.V()];
-            distTo = new int[G.V()];
-            edgeTo = new int[G.V()];
-
-            for (int v = 0; v < G.V(); v++)
-                distTo[v] = INFINITY;
-            validateVertices(sources);
-            bfs(G, sources);
-        }
-
-
-        private void bfs(Digraph G, int s) {
-            Queue<Integer> q = new Queue<>();
-            marked[s] = true;
-            distTo[s] = 0;
-            q.enqueue(s);
-            while (!q.isEmpty()) {
-                int v = q.dequeue();
-                for (int w : G.adj(v)) {
-                    if (!marked[w]) {
-                        edgeTo[w] = v;
-                        distTo[w] = distTo[v] + 1;
-                        marked[w] = true;
-                        q.enqueue(w);
-                    }
-                }
-            }
-        }
-
-        private void bfs(Digraph G, Iterable<Integer> sources) {
-            Queue<Integer> q = new Queue<>();
-            for (int s : sources) {
-                marked[s] = true;
-                distTo[s] = 0;
-                q.enqueue(s);
-            }
-            while (!q.isEmpty()) {
-                int v = q.dequeue();
-                for (int w : G.adj(v)) {
-                    if (!marked[w]) {
-                        edgeTo[w] = v;
-                        distTo[w] = distTo[v] + 1;
-                        marked[w] = true;
-                        q.enqueue(w);
-                    }
-                }
-            }
-        }
-
-        public boolean hasPathTo(int v) {
-            validateVertex(v);
-            return marked[v];
-        }
-
-        public int distTo(int v) {
-            validateVertex(v);
-            return distTo[v];
-        }
-
-        public Iterable<Integer> pathTo(int v) {
-            validateVertex(v);
-            if (!hasPathTo(v)) return null;
-            Stack<Integer> path = new Stack<Integer>();
-            int x;
-            for (x = v; distTo[x] != 0; x = edgeTo[x])
-                path.push(x);
-            path.push(x);
-            return path;
-        }
-
-
-        private void validateVertex(int v) {
-            int V = marked.length;
-            if (v < 0 || v >= V)
-                throw new IllegalArgumentException("vertex " + v + " is not between 0 and " + (V - 1));
-        }
-
-        private void validateVertices(Iterable<Integer> vertices) {
-            if (vertices == null) {
-                throw new IllegalArgumentException("argument is null");
-            }
-            int V = marked.length;
-            int count = 0;
-            for (Integer v : vertices) {
-                count++;
-                if (v == null) {
-                    throw new IllegalArgumentException("vertex is null");
-                }
-                validateVertex(v);
-            }
-            if (count == 0) {
-                throw new IllegalArgumentException("zero vertices");
-            }
-        }
-    }
+    private boolean fromPathLoop = false;
+    private boolean toPathLoop = false;
 
     // constructor takes a digraph ( not necessarily a DAG )
     public SAP(Digraph digraph) {
@@ -139,386 +30,273 @@ public class SAP {
         if (cycleFinder.hasCycle()) {
             hasCycle = true;
         }
-        this.digraphCopy = digraph;
+        digraphDFCopy = digraph;
+        minDistance = -1;
+        ancestor = -1;
     }
 
     // length of the shortest ancestral path between v and w; -1 if no such path
     public int length(int v, int w) {
-        // System.out.println("sap triggers the length() with primitive integers ");
-        // ancestor(v, w);
-        getAncestor(v, w);
+        // System.out.println("Calculating the distance between : " + v + " " + w);
+        if (v == from && w == to) return minDistance;
+        from = v;
+        to = w;
+        if (v == w) {
+            ancestor = v;
+            return 0;
+        }
+        if ((digraphDFCopy.indegree(from) == 0 && digraphDFCopy.outdegree(from) == 0) || (digraphDFCopy.indegree(to) == 0 &&
+                digraphDFCopy.outdegree(to) == 0)) {
+            ancestor = -1;
+            return minDistance = -1;
+
+        }
+        fromPathLoop = false;
+        toPathLoop = false;
+        n = digraphDFCopy.V();
+        fromMarked = new boolean[n];
+        toMarked = new boolean[n];
+        fromEdgeTo = new int[n];
+        toEdgeTo = new int[n];
+        fromDistTo = new int[n];
+        toDistTo = new int[n];
+        minDistance = lockStepBFS(v, w);
         return minDistance;
     }
 
     // length of the shortest ancestral path between any vertex in v and any vertex in w; -1 if no such path
     public int length(Iterable<Integer> v, Iterable<Integer> w) {
-        // System.out.println("sap triggers the length() with iterables ");
         if (v == null || w == null)
             throw new IllegalArgumentException("Iterable value to SAP.length() can not be null.");
-        ancestor(v, w);
+        int currentDistance = 0;
+        int prevDistance = INFINITY;
+        // System.out.printf("sap triggers ancestor() with iterables ");
+        Iterator<Integer> i = v.iterator();
+        Iterator<Integer> j = w.iterator();
+        while (i.hasNext()) {
+            int source = i.next();
+            while (j.hasNext()) {
+                int destination = j.next();
+                currentDistance = length(source, destination);
+                // System.out.printf("Current Distance: %d \n", currentDistance);
+                if (currentDistance != -1 && currentDistance < prevDistance) {
+                    prevDistance = currentDistance;
+                }
+            }
+            j = w.iterator();
+        }
+        // System.out.printf("Here is the last value in previous distance: %d\n" , prevDistance);
+        minDistance = prevDistance;
         return minDistance;
     }
 
-    private boolean nodeExists(int h) {
-        boolean exists = false;
-        for (int i = 0; i < digraphCopy.V(); i++) {
-            if (h == i) exists = true;
-        }
-        return exists;
-    }
-
     // a common ancestor of v and w that participates in a shortest ancestral path; -1 if no such path
-    public int ancestor(int from, int to) {
-        if (this.from == from && this.to == to) return ancestor;
-        if (from == to) {
-            minDistance = 0;
-            return ancestor = from;
-        }
-        ancestor = -1;
-        minDistance = -1;
-        this.from = from;
-        this.to = to;
-        if ((digraphCopy.indegree(from) == 0 && digraphCopy.outdegree(from) == 0) || (digraphCopy.indegree(to) == 0 &&
-                digraphCopy.outdegree(to) == 0))
-            return ancestor;
-        n = digraphCopy.V();
-        marked = new boolean[n];
-        edgeTo = new int[n];
-        disTo = new int[n];
-        for (int i = 0; i < n; i++) {
-            disTo[i] = INFINITY;
-            edgeTo[i] = -1;
-        }
-        lockStepBFS(from, to);
-        return ancestor;
-    }
-
-    public int getAncestor(int v, int w) {
+    public int ancestor(int v, int w) {
+        // System.out.println("Calculating the ancestor between : " + v + " " + w);
         if (this.from == v && this.to == w) return ancestor;
+        from = v;
+        to = w;
         if (v == w) {
-            minDistance = 0;
             return ancestor = v;
         }
-        ancestor = -1;
-        minDistance = -1;
-        this.from = v;
-        this.to = w;
-        if ((digraphCopy.indegree(from) == 0 && digraphCopy.outdegree(from) == 0) || (digraphCopy.indegree(to) == 0 &&
-                digraphCopy.outdegree(to) == 0))
-            return ancestor;
-        n = digraphCopy.V();
-        marked = new boolean[n];
-        edgeTo = new int[n];
-        disTo = new int[n];
-        for (int i = 0; i < n; i++) {
-            disTo[i] = INFINITY;
-            edgeTo[i] = -1;
+        if ((digraphDFCopy.indegree(from) == 0 && digraphDFCopy.outdegree(from) == 0) || (digraphDFCopy.indegree(to) == 0 &&
+                digraphDFCopy.outdegree(to) == 0)) {
+            minDistance = -1;
+            return ancestor = -1;
         }
-        BreadthFirstDirectedPaths breadthFirstDirectedPathsFrom = new BreadthFirstDirectedPaths(digraphCopy, from);
-        BreadthFirstDirectedPaths breadthFirstDirectedPathsTo = new BreadthFirstDirectedPaths(digraphCopy, to);
-        minDistance = Math.min(breadthFirstDirectedPathsFrom.distTo(to), breadthFirstDirectedPathsTo.distTo(from));
-        minDistance = (minDistance == INFINITY) ? -1 : minDistance;
-        /* the first node that has a route is the ancestor - traversing nodes from source to destination start at source
-        and traverse edgeTo of the destination's breadth first search */
-        lockStepBFS(v, w);
-        return ancestor;
-    }
 
-    private void lockStepBFS(int f, int t) {
-        Queue<Integer> fromQueue = new Queue<>();
-        Queue<Integer> toQueue = new Queue<>();
-        fromQueue.enqueue(f);
-        toQueue.enqueue(t);
-        marked[f] = true;
-        disTo[f] = 0;
-        marked[t] = true;
-        disTo[t] = 0;
-        int w = -1;
-        int v = -1;
-        while (!fromQueue.isEmpty() || !toQueue.isEmpty()) {
-            if (!fromQueue.isEmpty()) v = fromQueue.dequeue();
-            if (!toQueue.isEmpty()) w = toQueue.dequeue();
-            for (int j : digraphCopy.adj(v)) {
-                if (!marked[j]) {
-                    edgeTo[j] = v;
-                    marked[j] = true;
-                    disTo[j] = disTo[v] + 1;
-                    fromQueue.enqueue(j);
-                } else {
-                    ancestor = j;
-                    break;
-                }
-            }
-            if (ancestor != -1) break;
-            for (int k : digraphCopy.adj(w)) {
-                if (!marked[k]) {
-                    edgeTo[k] = w;
-                    marked[k] = true;
-                    disTo[k] = disTo[w] + 1;
-                    toQueue.enqueue(k);
-                } else {
-                    ancestor = k;
-                    break;
-                }
-            }
-            if (ancestor != -1) break;
-        }
+        fromPathLoop = false;
+        toPathLoop = false;
+        n = digraphDFCopy.V();
+        fromMarked = new boolean[n];
+        toMarked = new boolean[n];
+        fromEdgeTo = new int[n];
+        toEdgeTo = new int[n];
+        fromDistTo = new int[n];
+        toDistTo = new int[n];
+        lockStepBFS(from, to);
+        return ancestor;
     }
 
     // a common ancestor that participates in the shortest ancestral path; -1 if no such path
     public int ancestor(Iterable<Integer> v, Iterable<Integer> w) {
         if (v == null || w == null)
             throw new IllegalArgumentException("Iterable value to SAP.ancestor() can not be null.");
-        int distance = Integer.MAX_VALUE;
-        int currentAncestor = -1;
-        // System.out.printf("sap triggers ancestor() with iterables ");
-        for (int i : v) {
-            for (int j : w) {
-                // StdOut.printf("Calling ancestor(%d, %d) ", i, j);
-                ancestor(i, j);
-                if (distance > minDistance) {
-                    distance = minDistance;
+
+        int len = 0;
+        int prevLen = INFINITY;
+        int currentAncestor = 0;
+        Iterator<Integer> i = v.iterator();
+        Iterator<Integer> j = w.iterator();
+        while (i.hasNext()) {
+            int source = i.next();
+            while (j.hasNext()) {
+                int destination = j.next();
+                len = length(source, destination);
+                if (len != -1 && len < prevLen) {
                     currentAncestor = ancestor;
+                    prevLen = len;
                 }
             }
+            j = w.iterator();
         }
-        minDistance = distance;
         ancestor = currentAncestor;
+        minDistance = prevLen;
         return ancestor;
     }
 
-    private List<Integer> getPath(int from, int to) {
-        ancestor(from, to);
-        Collections.sort(path);
-        return path;
+    private int lockStepBFS(int f, int t) {
+        Queue<Integer> fromQueue = new Queue<>();
+        Queue<Integer> toQueue = new Queue<>();
+        fromQueue.enqueue(f);
+        toQueue.enqueue(t);
+        fromMarked[f] = true;
+        fromDistTo[f] = 0;
+        toMarked[t] = true;
+        toDistTo[t] = 0;
+        int w = -1;
+        int v = -1;
+        int currentDistance = INFINITY;
+        while (!(fromPathLoop && toPathLoop)) {
+            if (fromQueue.isEmpty() && toQueue.isEmpty()) break;
+            if ((fromPathLoop == true && currentDistance == INFINITY) || (toPathLoop == true && currentDistance == INFINITY))
+                break;
+            if (!fromQueue.isEmpty()) {
+                v = fromQueue.dequeue();
+                // System.out.printf("Here is v: %d w: %d \n", v, w);
+                for (int j : digraphDFCopy.adj(v)) {
+                    // keep going until you hit a loop in both queues, or you run out of nodes to process
+                    if (fromEdgeTo[j] != v && v != 0) {
+                        fromEdgeTo[j] = v;
+                        int temp = fromDistTo[v];
+                        fromDistTo[j] = temp + 1;
+                    } else if (fromEdgeTo[j] == 0 && v == 0) {
+                    /* since the support arrays like fromEdgeTo have 0s by default, I have to do this and since there
+                    are no double edges this should be fine as far as I can think of.
+                     */
+                        fromEdgeTo[j] = v;
+                        int temp = fromDistTo[v];
+                        fromDistTo[j] = temp + 1;
+                    }
+                    // for j prevNode = v, edgeNode = w, ancestor = j, and f and t are the same
+                    if (fromMarked[j] && validateEdgeTo(v, w, j, f, t)) {
+                        // in a self loop
+                        System.out.println("Hit a self loop in j block");
+                        fromPathLoop = true;
+                        if (currentDistance != INFINITY && currentDistance > (toDistTo[j] + fromDistTo[v] + 1)) {
+                            System.out.println("Hit a self loop in j block, and updated the minDistance. ");
+                            ancestor = j;
+                            currentDistance = toDistTo[j] + fromDistTo[v] + 1;
+                        }
+                    }
+                    if (!toMarked[j] && !fromMarked[j]) {
+                        fromQueue.enqueue(j);
+                    }
+                    if (!fromMarked[j]) {
+                        fromMarked[j] = true;
+                    }
+                    if (fromMarked[j] && toMarked[j]) {
+                        if (currentDistance > (toDistTo[j] + fromDistTo[v] + 1)) {
+                            ancestor = j;
+                            currentDistance = toDistTo[j] + fromDistTo[v] + 1;
+                        }
+                    }
+                }
+            }
+            if (!toQueue.isEmpty()) {
+                w = toQueue.dequeue();
+                for (int k : digraphDFCopy.adj(w)) {
+                    if (toEdgeTo[k] != w && w != 0) {
+                        toEdgeTo[k] = w;
+                        int temp = toDistTo[w];
+                        toDistTo[k] = temp + 1;
+                    } else if (toEdgeTo[k] == 0 && w == 0) {
+                        toEdgeTo[k] = w;
+                        int temp = toDistTo[w];
+                        toDistTo[k] = temp + 1;
+                    }
+                    if (toMarked[k]) {
+                        toPathLoop = true;
+                        // System.out.println("Hit a self loop in k block");
+                        if (currentDistance != INFINITY && currentDistance > (fromDistTo[k] + toDistTo[w] + 1)) {
+                            System.out.println("Hit a self loop in k block, and updated the minDistance. ");
+                            ancestor = k;
+                            currentDistance = fromDistTo[k] + toDistTo[w] + 1;
+                        }
+                    }
+                    if (!toMarked[k] && !fromMarked[k]) {
+                        toQueue.enqueue(k);
+                    }
+                    if (!toMarked[k]) {
+                        toMarked[k] = true;
+                    }
+                    if (fromMarked[k] && toMarked[k]) {
+                        if ((fromDistTo[k] + toDistTo[w] + 1) < currentDistance) {
+                            ancestor = k;
+                            currentDistance = fromDistTo[k] + toDistTo[w] + 1;
+
+                        }
+                    }
+                }
+            }
+        }
+        if (currentDistance == INFINITY) {
+            minDistance = -1;
+            ancestor = -1;
+            return minDistance;
+        } else minDistance = currentDistance;
+        return currentDistance;
+    }
+
+    // for j prevNode = v, edgeNode = w, ancestor = j, and f and t are the same
+    private boolean validateEdgeTo(int prevNode, int edgeNode, int ancestor, int f, int t) {
+
+        boolean connected = false;
+        int hops = 0;
+        boolean fromConnected = false;
+        boolean toConnected = false;
+        int counter;
+        int previousCounterValue;
+        if (ancestor != f) {
+            counter = prevNode;
+            previousCounterValue = INFINITY;
+            while (fromEdgeTo[counter] != from && counter != previousCounterValue) {
+                hops++;
+                previousCounterValue = counter;
+                counter = fromEdgeTo[counter];
+                // If counter does not get to from this loop keeps on going
+            }
+            if (counter == f) fromConnected = true;
+            // one for stopping early and another for starting from the previous node
+            hops += 2;
+        } else fromConnected = true;
+        if (ancestor != t) {
+            counter = ancestor;
+            previousCounterValue = INFINITY;
+            while (toEdgeTo[counter] != to && counter != previousCounterValue) {
+                hops++;
+                previousCounterValue = counter;
+                counter = toEdgeTo[counter];
+            }
+            if (counter == t) toConnected = true;
+            hops++;// one more for stopping one node too early
+        } else toConnected = true;
+        /* For some reason I was not using Math.min() here and all the tests were passing. I have switched
+         * back and will have to test to see if it works. If not, just change the below comments around */
+        if (fromConnected && toConnected) connected = true;
+        // if (fromConncted && toConnected) currentDistance = Math.min(currentDistance, toDistTo[j] + fromDistTo[v] + 1);
+        System.out.println("validateEdgeTo() was triggered for " + f + " and " + t + " and returned " + connected);
+        return connected;
     }
 
     public static void main(String[] args) {
-        /*
-        System.out.println(sap.ancestor(1, 2));
-        System.out.println(sap.ancestor(0, 2));
-        System.out.println(sap.ancestor(0, 1));
-        System.out.println(sap.ancestor(0, 10));
-Digraph digraph = new Digraph(new In(new File("src/main/resources/digraph-ambiguous-ancestor.txt")));
+        Digraph digraph = new Digraph(new In("digraph9.txt"));
         SAP sap = new SAP(digraph);
-        sap.getPathTwo(9, 5);
-        sap.ancestor(1, 2);
-        sap.ancestor(0, 24);
-        [13, 23, 24] | [6, 16, 17] | [3]
+        int length = sap.length(0, 5);
+        if (length != 4)
+            throw new AssertionError("The value of length between 0,5 in digraph9 should be 4, but it is: " + length);
+        int ancestor = sap.ancestor(0, 5);
+        if (ancestor != 4) throw new AssertionError("The ancestor of 0, and 5 should be 4, but it is: " + ancestor);
 
-
-        digraph = new Digraph(new In(new File("src/main/resources/digraph1.txt")));
-        sap = new SAP(digraph);
-        System.out.println("Here is result of 1 and 6: " + sap.ancestor(1, 6));*/
-        /* Reading in digraph25.txt here */
-        Digraph digraph = new Digraph(new In(args[0]));
-        SAP sap = new SAP(digraph);
-        System.out.print("The path between 2 and 0 should be: [ 0 2 ] ");
-        System.out.print("[");
-        for (int i : sap.getPath(2, 0)) {
-            System.out.print(" " + i + " ");
-        }
-        System.out.println("]");
-        System.out.println("And the ancestor is : " + sap.ancestor(2, 0));
-        System.out.println();
-        System.out.print("The path between 1 and 2 should be: [ 1 2 ] ");
-        System.out.print("[");
-        for (int i : sap.getPath(1, 2)) {
-            System.out.print(" " + i + " ");
-        }
-        System.out.println("]");
-        List<Integer> l1 = new ArrayList<>(Arrays.asList(2, 5));
-        List<Integer> l2 = new ArrayList<>(Arrays.asList(0, 6));
-        digraph = new Digraph(new In(args[0]));
-        sap = new SAP(digraph);
-        System.out.println("ancestor between l1 and l2 expected to be 0: " + sap.ancestor(l1, l2));
-        System.out.println("The path length for the shortest path should be 1: " + sap.length(l1, l2));
-        System.out.print("The path between 1 and 2 should be [0 1 2] ");
-        System.out.print("[");
-        sap = new SAP(digraph);
-        for (int i : sap.getPath(1, 2)) {
-            System.out.print(" " + i + " ");
-        }
-        System.out.println("]");
-        System.out.println("And the ancestor is : " + sap.ancestor(1, 2));
-        System.out.println();
-        System.out.print("The path between 3 and 4 should be [1 3 4] ");
-        System.out.print("[");
-        sap = new SAP(digraph);
-        for (int i : sap.getPath(3, 4)) {
-            System.out.print(" " + i + " ");
-        }
-        System.out.println("]");
-        System.out.println("And the ancestor is : " + sap.ancestor(3, 4));
-        System.out.println();
-        System.out.print("The path between 4 and 3 should be [1 3 4] ");
-        System.out.print("[");
-        sap = new SAP(digraph);
-        for (int i : sap.getPath(4, 3)) {
-            System.out.print(" " + i + " ");
-        }
-        System.out.println("]");
-        System.out.println("And the ancestor is : " + sap.ancestor(4, 3));
-        System.out.println();
-        System.out.print("The path between 5 and 6 should be [5 2 6] ");
-        System.out.print("[");
-        sap = new SAP(digraph);
-        for (int i : sap.getPath(5, 6)) {
-            System.out.print(" " + i + " ");
-        }
-        System.out.println("]");
-        System.out.println("And the ancestor is : " + sap.ancestor(5, 6));
-        System.out.println();
-        System.out.print("The path between 6 and 5 should be [ 2 5  6] ");
-        System.out.print("[");
-        sap = new SAP(digraph);
-        for (int i : sap.getPath(6, 5)) {
-            System.out.print(" " + i + " ");
-        }
-        System.out.println("]");
-        System.out.println("And the ancestor is : " + sap.ancestor(6, 5));
-        System.out.println();
-        System.out.print("The path between 4 and 6 should be: [  0 1 2 4 6 ] ");
-        System.out.print("[");
-        sap = new SAP(digraph);
-        for (int i : sap.getPath(4, 6)) {
-            System.out.print(" " + i + " ");
-        }
-        System.out.println("]");
-        System.out.println("And the ancestor is : " + sap.ancestor(4, 6));
-        System.out.println();
-        System.out.print("The path between 1 and 6 should be: [  0 1 2 6 ] ");
-        System.out.print("[");
-        sap = new SAP(digraph);
-        for (int i : sap.getPath(1, 6)) {
-            System.out.print(" " + i + " ");
-        }
-        System.out.println("]");
-        System.out.println("And the ancestor is : " + sap.ancestor(1, 6));
-        System.out.println();
-        System.out.print("The path between 17 and 24 should be: [  5 10 12 17 20 24 ] ");
-        System.out.print("[");
-        sap = new SAP(digraph);
-        for (int i : sap.getPath(17, 24)) {
-            System.out.print(" " + i + " ");
-        }
-        System.out.println("]");
-        System.out.println("And the ancestor is : " + sap.ancestor(17, 24));
-        System.out.println();
-        System.out.print("The path between 23 and 24 should be: [ 24 23 20 ] ");
-        System.out.print("[");
-        sap = new SAP(digraph);
-        for (int i : sap.getPath(23, 24)) {
-            System.out.print(" " + i + " ");
-        }
-        System.out.println("]");
-        System.out.println();
-        System.out.println("And the ancestor is : " + sap.ancestor(23, 24));
-        System.out.println();
-        System.out.print("The path between 11 and 4 should be: [  11 5 4 2 1 0 ] ");
-        System.out.print("[");
-        sap = new SAP(digraph);
-        for (int i : sap.getPath(11, 4)) {
-            System.out.print(" " + i + " ");
-        }
-        System.out.println("]");
-        System.out.println("And the ancestor is : " + sap.ancestor(11, 4));
-        System.out.println();
-        System.out.print("The path between 17 and 19 should be: [ 17 5 10 12 19 ] ");
-        System.out.print("[");
-        sap = new SAP(digraph);
-        for (int i : sap.getPath(17, 19)) {
-            System.out.print(" " + i + " ");
-        }
-        System.out.println("]");
-        System.out.println("And the ancestor is : " + sap.ancestor(17, 19));
-        System.out.println();
-        System.out.print("The path between 17 and 17 should be: [ 17 ] ");
-        System.out.print("[");
-        sap = new SAP(digraph);
-        for (int i : sap.getPath(17, 17)) {
-            System.out.print(" " + i + " ");
-        }
-        System.out.println("]");
-        sap = new SAP(digraph);
-        System.out.println("And the ancestor is : " + sap.ancestor(17, 17));
-        System.out.println();
-        sap = new SAP(digraph);
-        List<Integer> one = new ArrayList<>(Arrays.asList(13, 23, 24));
-        List<Integer> two = new ArrayList<>(Arrays.asList(6, 16, 17));
-        System.out.println("==========================================================================================");
-        System.out.println("The shortest common ancestor in above sets should be 3, and it is: " + sap.ancestor(one, two));
-        System.out.println("==========================================================================================");
-
-        digraph = new Digraph(new In(new File("src/main/resources/digraph1.txt")));
-        sap = new SAP(digraph);
-        System.out.print("The path between 10 and 4 should be: [ 4 1 5 10 ] ");
-        System.out.print("[");
-        for (int i : sap.getPath(4, 10)) {
-            System.out.print(" " + i + " ");
-        }
-        System.out.println("]");
-        System.out.println();
-
-        sap = new SAP(digraph);
-        System.out.print("The path between 7 and 2 should be: [ 0 1 2 3 7 ] ");
-        System.out.print("[");
-        for (int i : sap.getPath(7, 2)) {
-            System.out.print(" " + i + " ");
-        }
-        System.out.println("]");
-        System.out.println();
-
-        sap = new SAP(digraph);
-        System.out.println("ancestor should return 1 for values 3 and 11: " + sap.ancestor(3, 11));
-        System.out.println("********************************* Ambiguous tests ***************************************");
-        digraph = new Digraph(new In(new File("src/main/resources/digraph-ambiguous-ancestor.txt")));
-        sap = new SAP(digraph);
-        System.out.print("The shortest path between 1 and 2 - in ambiguous-ancestor is [1 2]");
-        System.out.print("[");
-        // test 1 and 2 for ambiguous-ancestor
-        for (int i : sap.getPath(1, 2)) {
-            System.out.print(" " + i + " ");
-        }
-        System.out.println("]");
-        System.out.println("And the ancestor is : " + sap.ancestor(1, 2));
-        System.out.println();
-        System.out.print("The shortest path between 0 and 2 - in ambiguous-ancestor is [0 1 2]");
-        System.out.print("[");
-        // test 0 and 2 for ambiguous-ancestor
-        sap = new SAP(digraph);
-        for (int i : sap.getPath(0, 2)) {
-            System.out.print(" " + i + " ");
-        }
-        System.out.println("]");
-        System.out.println("And the ancestor is : " + sap.ancestor(0, 2));
-        System.out.println();
-        System.out.print("The shortest path between 9 and 5 - in ambiguous-ancestor is [] - an empty set. There is not path : ");
-        System.out.print("[");
-        // find the shortest path between 9 and 5 for ambiguous-ancestor
-        sap = new SAP(digraph);
-        for (int i : sap.getPath(9, 5)) {
-            System.out.print(" " + i + " ");
-        }
-        System.out.println("]");
-        System.out.println();
-        System.out.print("The path between 27 and 0 should be: Exception ");
-        sap = new SAP(digraph);
-        System.out.print("[");
-        try {
-            for (int i : sap.getPath(27, 0)) {
-                System.out.print(" " + i + " ");
-            }
-            System.out.println("]");
-            System.out.println();
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(e.getMessage());
-        }
-        digraph = new Digraph(new In(new File("src/main/resources/simplecycle.txt")));
-        sap = new SAP(digraph);
-        System.out.println("Expecting this to be true for simplecycle.txt: " + sap.hasCycle);
-        digraph = new Digraph(new In(new File("synsets.txt")));
-        sap = new SAP(digraph);
-        sap.getPath(81679, 24307);
     }
 }
