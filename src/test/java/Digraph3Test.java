@@ -1,6 +1,5 @@
 import edu.princeton.cs.algs4.Digraph;
 import edu.princeton.cs.algs4.In;
-import org.testng.asserts.Assertion;
 
 public class Digraph3Test {
     public static void main(String[] args) {

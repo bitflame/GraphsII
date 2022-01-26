@@ -149,6 +149,7 @@ public class SAP {
     }
 
     private int lockStepBFS(int f, int t) {
+        /* todo - you can use digraph indegree to set edgeTo f and t maybe */
         Queue<Integer> fromQueue = new Queue<>();
         Queue<Integer> toQueue = new Queue<>();
         fromQueue.enqueue(f);
@@ -187,7 +188,7 @@ public class SAP {
                         System.out.println("Hit a self loop in j block");
                         fromPathLoop = true;
                         if (currentDistance != INFINITY && currentDistance > (toDistTo[j] + fromDistTo[v] + 1)) {
-                            System.out.println("Hit a self loop in j block, and updated the minDistance. ");
+                            System.out.println("Hit a self loop in j block, and updated the minDistance for: " + f + " and " + t);
                             ancestor = j;
                             currentDistance = toDistTo[j] + fromDistTo[v] + 1;
                         }
