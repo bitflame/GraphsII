@@ -1,6 +1,5 @@
 import edu.princeton.cs.algs4.Digraph;
 import edu.princeton.cs.algs4.In;
-import org.spockframework.util.Assert;
 
 public class GetAncestorTestDigraph3 {
     public static void main(String[] args) {

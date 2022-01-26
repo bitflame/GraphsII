@@ -15,8 +15,9 @@ public class SAP {
     private int n;
     private boolean[] fromMarked;
     private boolean[] toMarked;
-    private int[] fromEdgeTo;
-    private int[] toEdgeTo;
+    //private int[] fromEdgeTo;
+    //private int[] toEdgeTo;
+    private int[] edgeTo;
     private int[] fromDistTo;
     private int[] toDistTo;
     private static final int INFINITY = Integer.MAX_VALUE;
@@ -56,8 +57,9 @@ public class SAP {
         n = digraphDFCopy.V();
         fromMarked = new boolean[n];
         toMarked = new boolean[n];
-        fromEdgeTo = new int[n];
-        toEdgeTo = new int[n];
+        // fromEdgeTo = new int[n];
+        // toEdgeTo = new int[n];
+        edgeTo = new int[n];
         fromDistTo = new int[n];
         toDistTo = new int[n];
         minDistance = lockStepBFS(v, w);
@@ -110,8 +112,9 @@ public class SAP {
         n = digraphDFCopy.V();
         fromMarked = new boolean[n];
         toMarked = new boolean[n];
-        fromEdgeTo = new int[n];
-        toEdgeTo = new int[n];
+        // fromEdgeTo = new int[n];
+        // toEdgeTo = new int[n];
+        edgeTo = new int[n];
         fromDistTo = new int[n];
         toDistTo = new int[n];
         lockStepBFS(from, to);
@@ -166,20 +169,20 @@ public class SAP {
                 // System.out.printf("Here is v: %d w: %d \n", v, w);
                 for (int j : digraphDFCopy.adj(v)) {
                     // keep going until you hit a loop in both queues, or you run out of nodes to process
-                    if (fromEdgeTo[j] != v && v != 0) {
-                        fromEdgeTo[j] = v;
+                    if (edgeTo[j] != v && v != 0 && j != f) {
+                        edgeTo[j] = v;
                         int temp = fromDistTo[v];
                         fromDistTo[j] = temp + 1;
-                    } else if (fromEdgeTo[j] == 0 && v == 0) {
+                    } else if (edgeTo[j] == 0 && v == 0) {
                     /* since the support arrays like fromEdgeTo have 0s by default, I have to do this and since there
                     are no double edges this should be fine as far as I can think of.
                      */
-                        fromEdgeTo[j] = v;
+                        edgeTo[j] = v;
                         int temp = fromDistTo[v];
                         fromDistTo[j] = temp + 1;
                     }
                     // for j prevNode = v, edgeNode = w, ancestor = j, and f and t are the same
-                    if (fromMarked[j] && validateEdgeTo(v, w, j, f, t)) {
+                    if (fromMarked[j]) {
                         // in a self loop
                         System.out.println("Hit a self loop in j block");
                         fromPathLoop = true;
@@ -188,6 +191,8 @@ public class SAP {
                             ancestor = j;
                             currentDistance = toDistTo[j] + fromDistTo[v] + 1;
                         }
+                        edgeTo[j] = v;
+                        fromDistTo[j] = fromDistTo[v] + 1;
                     }
                     if (!toMarked[j] && !fromMarked[j]) {
                         fromQueue.enqueue(j);
@@ -200,18 +205,20 @@ public class SAP {
                             ancestor = j;
                             currentDistance = toDistTo[j] + fromDistTo[v] + 1;
                         }
+                        edgeTo[j] = v;
+                        fromDistTo[j] = fromDistTo[v] + 1;
                     }
                 }
             }
             if (!toQueue.isEmpty()) {
                 w = toQueue.dequeue();
                 for (int k : digraphDFCopy.adj(w)) {
-                    if (toEdgeTo[k] != w && w != 0) {
-                        toEdgeTo[k] = w;
+                    if (edgeTo[k] != w && w != 0 && k != w) {
+                        edgeTo[k] = w;
                         int temp = toDistTo[w];
                         toDistTo[k] = temp + 1;
-                    } else if (toEdgeTo[k] == 0 && w == 0) {
-                        toEdgeTo[k] = w;
+                    } else if (edgeTo[k] == 0 && w == 0) {
+                        edgeTo[k] = w;
                         int temp = toDistTo[w];
                         toDistTo[k] = temp + 1;
                     }
@@ -223,6 +230,8 @@ public class SAP {
                             ancestor = k;
                             currentDistance = fromDistTo[k] + toDistTo[w] + 1;
                         }
+                        edgeTo[k] = w;
+                        toDistTo[k] = toDistTo[w] + 1;
                     }
                     if (!toMarked[k] && !fromMarked[k]) {
                         toQueue.enqueue(k);
@@ -234,8 +243,9 @@ public class SAP {
                         if ((fromDistTo[k] + toDistTo[w] + 1) < currentDistance) {
                             ancestor = k;
                             currentDistance = fromDistTo[k] + toDistTo[w] + 1;
-
                         }
+                        edgeTo[k] = w;
+                        toDistTo[k] = toDistTo[w] + 1;
                     }
                 }
             }
@@ -260,10 +270,10 @@ public class SAP {
         if (ancestor != f) {
             counter = prevNode;
             previousCounterValue = INFINITY;
-            while (fromEdgeTo[counter] != from && counter != previousCounterValue) {
+            while (edgeTo[counter] != from && counter != previousCounterValue) {
                 hops++;
                 previousCounterValue = counter;
-                counter = fromEdgeTo[counter];
+                counter = edgeTo[counter];
                 // If counter does not get to from this loop keeps on going
             }
             if (counter == f) fromConnected = true;
@@ -273,10 +283,10 @@ public class SAP {
         if (ancestor != t) {
             counter = ancestor;
             previousCounterValue = INFINITY;
-            while (toEdgeTo[counter] != to && counter != previousCounterValue) {
+            while (edgeTo[counter] != to && counter != previousCounterValue) {
                 hops++;
                 previousCounterValue = counter;
-                counter = toEdgeTo[counter];
+                counter = edgeTo[counter];
             }
             if (counter == t) toConnected = true;
             hops++;// one more for stopping one node too early
@@ -287,6 +297,10 @@ public class SAP {
         // if (fromConncted && toConnected) currentDistance = Math.min(currentDistance, toDistTo[j] + fromDistTo[v] + 1);
         System.out.println("validateEdgeTo() was triggered for " + f + " and " + t + " and returned " + connected);
         return connected;
+    }
+
+    public int getAncestor(int a, int b) {
+        return b;
     }
 
     public static void main(String[] args) {
