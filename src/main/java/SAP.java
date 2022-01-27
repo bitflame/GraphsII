@@ -191,15 +191,24 @@ public class SAP {
                     // for j prevNode = v, edgeNode = w, ancestor = j, and f and t are the same
                     if (fromMarked[j]) {
                         // in a self loop
-                        System.out.println("Hit a self loop in j block");
+                        System.out.println("Hit a self loop in j block for " + f + " and" + t);
                         fromPathLoop = true;
-                        if (currentDistance != INFINITY && currentDistance > (toDistTo[j] + fromDistTo[v] + 1)) {
+                        /* ancestor or the node that points to it, should be pointed to by one side starting from the
+                        source or destination */
+                        int w = edgeTo[j];
+                        edgeTo[j] = v;
+                        fromDistTo[j] = fromDistTo[v] + 1;
+                        boolean one = testEdgeTo(j, f);
+                        boolean two = testEdgeTo(w, f);
+                        boolean three = testEdgeTo(j, t);
+                        boolean four = testEdgeTo(w, t);
+                        boolean hasPath = ((one || two) && (three || four));
+                        if (currentDistance != INFINITY && currentDistance > (toDistTo[j] + fromDistTo[v] + 1) && hasPath) {
                             System.out.println("Hit a self loop in j block, and updated the minDistance for: " + f + " and " + t);
                             ancestor = j;
                             currentDistance = toDistTo[j] + fromDistTo[v] + 1;
                         }
-                        edgeTo[j] = v;
-                        fromDistTo[j] = fromDistTo[v] + 1;
+
                     }
                     if (!toMarked[j] && !fromMarked[j]) {
                         fromQueue.enqueue(j);
@@ -271,14 +280,17 @@ public class SAP {
     }
 
     // testEdgeTo(ancestor, x) and preAncestor'sNode like v, and w to the other end
-    public boolean testEdgeTo(int[] edgeTo, int ancestor, int destination) {
+    public boolean testEdgeTo(int ancestor, int destination) {
+        System.out.printf("inside testEdge for " + from + " and " + to);
         if (ancestor == destination) return true;
         int i = ancestor;
-        for (; i != destination; i = edgeTo[i]) {
-            System.out.print(" " + i);
+        int counter = 0;
+        for (; i != destination && counter < n; i = edgeTo[i]) {
+            if (i == -1) break;
+            counter++;
+            //System.out.print(" " + i);
         }
-        System.out.print(" "+ i);
-        System.out.println();
+        if (i != -1) System.out.print(" " + i);
         return (i == destination);
     }
 
