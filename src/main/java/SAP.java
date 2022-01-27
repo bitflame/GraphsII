@@ -158,15 +158,13 @@ public class SAP {
         fromDistTo[f] = 0;
         toMarked[t] = true;
         toDistTo[t] = 0;
-        int w = -1;
-        int v = -1;
         int currentDistance = INFINITY;
         while (!(fromPathLoop && toPathLoop)) {
             if (fromQueue.isEmpty() && toQueue.isEmpty()) break;
             if ((fromPathLoop == true && currentDistance == INFINITY) || (toPathLoop == true && currentDistance == INFINITY))
                 break;
             if (!fromQueue.isEmpty()) {
-                v = fromQueue.dequeue();
+                int v = fromQueue.dequeue();
                 // System.out.printf("Here is v: %d w: %d \n", v, w);
                 for (int j : digraphDFCopy.adj(v)) {
                     // keep going until you hit a loop in both queues, or you run out of nodes to process
@@ -212,7 +210,7 @@ public class SAP {
                 }
             }
             if (!toQueue.isEmpty()) {
-                w = toQueue.dequeue();
+                int w = toQueue.dequeue();
                 for (int k : digraphDFCopy.adj(w)) {
                     if (edgeTo[k] != w && w != 0 && k != w) {
                         edgeTo[k] = w;
@@ -259,45 +257,14 @@ public class SAP {
         return currentDistance;
     }
 
-    // for j prevNode = v, edgeNode = w, ancestor = j, and f and t are the same
-    private boolean validateEdgeTo(int prevNode, int edgeNode, int ancestor, int f, int t) {
-
-        boolean connected = false;
-        int hops = 0;
-        boolean fromConnected = false;
-        boolean toConnected = false;
-        int counter;
-        int previousCounterValue;
-        if (ancestor != f) {
-            counter = prevNode;
-            previousCounterValue = INFINITY;
-            while (edgeTo[counter] != from && counter != previousCounterValue) {
-                hops++;
-                previousCounterValue = counter;
-                counter = edgeTo[counter];
-                // If counter does not get to from this loop keeps on going
-            }
-            if (counter == f) fromConnected = true;
-            // one for stopping early and another for starting from the previous node
-            hops += 2;
-        } else fromConnected = true;
-        if (ancestor != t) {
-            counter = ancestor;
-            previousCounterValue = INFINITY;
-            while (edgeTo[counter] != to && counter != previousCounterValue) {
-                hops++;
-                previousCounterValue = counter;
-                counter = edgeTo[counter];
-            }
-            if (counter == t) toConnected = true;
-            hops++;// one more for stopping one node too early
-        } else toConnected = true;
-        /* For some reason I was not using Math.min() here and all the tests were passing. I have switched
-         * back and will have to test to see if it works. If not, just change the below comments around */
-        if (fromConnected && toConnected) connected = true;
-        // if (fromConncted && toConnected) currentDistance = Math.min(currentDistance, toDistTo[j] + fromDistTo[v] + 1);
-        System.out.println("validateEdgeTo() was triggered for " + f + " and " + t + " and returned " + connected);
-        return connected;
+    // testEdgeTo(ancestor, x) and preAncestor'sNode like v, and w to the other end
+    public boolean testEdgeTo(int[] edgeTo, int ancestor, int destination) {
+        if (ancestor == destination) return true;
+        int i = ancestor;
+        for (; i != destination; i = edgeTo[i]) {
+            System.out.print(" " + i);
+        }
+        return (i == destination);
     }
 
     public int getAncestor(int a, int b) {
