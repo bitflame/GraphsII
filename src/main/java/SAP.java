@@ -60,6 +60,9 @@ public class SAP {
         // fromEdgeTo = new int[n];
         // toEdgeTo = new int[n];
         edgeTo = new int[n];
+        for (int i = 0; i < n; i++) {
+            edgeTo[i] = -1;
+        }
         fromDistTo = new int[n];
         toDistTo = new int[n];
         minDistance = lockStepBFS(v, w);
@@ -115,6 +118,9 @@ public class SAP {
         // fromEdgeTo = new int[n];
         // toEdgeTo = new int[n];
         edgeTo = new int[n];
+        for (int i = 0; i < n; i++) {
+            edgeTo[i] = -1;
+        }
         fromDistTo = new int[n];
         toDistTo = new int[n];
         lockStepBFS(from, to);
@@ -168,14 +174,16 @@ public class SAP {
                 // System.out.printf("Here is v: %d w: %d \n", v, w);
                 for (int j : digraphDFCopy.adj(v)) {
                     // keep going until you hit a loop in both queues, or you run out of nodes to process
-                    if (edgeTo[j] != v && v != 0 && j != f) {
+                  /*  if (edgeTo[j] != v && v != 0 && j != f) {
                         edgeTo[j] = v;
                         int temp = fromDistTo[v];
                         fromDistTo[j] = temp + 1;
                     } else if (edgeTo[j] == 0 && v == 0) {
-                    /* since the support arrays like fromEdgeTo have 0s by default, I have to do this and since there
-                    are no double edges this should be fine as far as I can think of.
-                     */
+                        edgeTo[j] = v;
+                        int temp = fromDistTo[v];
+                        fromDistTo[j] = temp + 1;
+                    } */
+                    if (edgeTo[j] != v && j != f) {
                         edgeTo[j] = v;
                         int temp = fromDistTo[v];
                         fromDistTo[j] = temp + 1;
@@ -212,11 +220,16 @@ public class SAP {
             if (!toQueue.isEmpty()) {
                 int w = toQueue.dequeue();
                 for (int k : digraphDFCopy.adj(w)) {
-                    if (edgeTo[k] != w && w != 0 && k != w) {
+                  /*  if (edgeTo[k] != w && w != 0 && k != w) {
                         edgeTo[k] = w;
                         int temp = toDistTo[w];
                         toDistTo[k] = temp + 1;
                     } else if (edgeTo[k] == 0 && w == 0) {
+                        edgeTo[k] = w;
+                        int temp = toDistTo[w];
+                        toDistTo[k] = temp + 1;
+                    } */
+                    if (edgeTo[k] != w && k != w) {
                         edgeTo[k] = w;
                         int temp = toDistTo[w];
                         toDistTo[k] = temp + 1;
@@ -264,6 +277,8 @@ public class SAP {
         for (; i != destination; i = edgeTo[i]) {
             System.out.print(" " + i);
         }
+        System.out.print(" "+ i);
+        System.out.println();
         return (i == destination);
     }
 
