@@ -37,8 +37,10 @@ public class SAP {
     // length of the shortest ancestral path between v and w; -1 if no such path
     public int length(int v, int w) {
         // System.out.println("length(): Calculating the distance between : " + v + " " + w);
-        if (v < 0 || v >= digraphDFCopy.V()) throw new IllegalArgumentException("The node ids should be within acceptable range.\n");
-        if (w < 0 || w >= digraphDFCopy.V()) throw new IllegalArgumentException("The node ids should be within acceptable range.\n");
+        if (v < 0 || v >= digraphDFCopy.V())
+            throw new IllegalArgumentException("The node ids should be within acceptable range.\n");
+        if (w < 0 || w >= digraphDFCopy.V())
+            throw new IllegalArgumentException("The node ids should be within acceptable range.\n");
         if (v == from && w == to && v != w) return minDistance;
         from = v;
         to = w;
@@ -52,7 +54,9 @@ public class SAP {
             ancestor = -1;
             return minDistance = -1;
         }
-        lockStepBFS(v, w);
+        if ((fromMarked[v] || toMarked[v]) && (fromMarked[w] || toMarked[w])) {
+            updateAncestor(v, w);
+        } else lockStepBFS(from, to);
         return minDistance;
     }
 
@@ -97,8 +101,10 @@ public class SAP {
     // a common ancestor of v and w that participates in a shortest ancestral path; -1 if no such path
     public int ancestor(int v, int w) {
         // System.out.println("Calculating the ancestor between : " + v + " " + w);
-        if (v < 0 || v >= digraphDFCopy.V()) throw new IllegalArgumentException("The node ids should be within acceptable range.\n");
-        if (w < 0 || w >= digraphDFCopy.V()) throw new IllegalArgumentException("The node ids should be within acceptable range.\n");
+        if (v < 0 || v >= digraphDFCopy.V())
+            throw new IllegalArgumentException("The node ids should be within acceptable range.\n");
+        if (w < 0 || w >= digraphDFCopy.V())
+            throw new IllegalArgumentException("The node ids should be within acceptable range.\n");
         if (v < 0 || w < 0) throw new IllegalArgumentException("The node ids should be within acceptable range.\n");
         if (this.from == v && this.to == w && v != w) return ancestor;
         from = v;
@@ -111,8 +117,22 @@ public class SAP {
             minDistance = -1;
             return ancestor = -1;
         }
-        lockStepBFS(from, to);
+        if ((fromMarked[v] || toMarked[v]) && (fromMarked[w] || toMarked[w])) {
+            updateAncestor(v, w);
+        } else lockStepBFS(from, to);
         return ancestor;
+    }
+
+    // method to find the ancestor if both source and destination are marked
+    private void updateAncestor(int v, int w) {
+// 1- Find the new ancestor
+        System.out.printf("Just a placeholder ");
+        int counter = 0;
+        for (int i = v, j = w; i != w && j != v; i = edgeTo[i], j = edgeTo[j]) {
+            counter++;
+            if (i == -1 || j == -1) break; // may have to separate these into two loops
+        }
+        minDistance = counter;
     }
 
     // a common ancestor that participates in the shortest ancestral path; -1 if no such path
@@ -156,6 +176,14 @@ public class SAP {
 
     private void lockStepBFS(int f, int t) {
         /* todo - you can use digraph indegree to set edgeTo f and t maybe */
+        fromMarked = new boolean[n];
+        toMarked = new boolean[n];
+        edgeTo = new int[n];
+        for (int i = 0; i < n; i++) {
+            edgeTo[i] = -1;
+        }
+        fromDistTo = new int[n];
+        toDistTo = new int[n];
         Queue<Integer> fromQueue = new Queue<>();
         Queue<Integer> toQueue = new Queue<>();
         fromQueue.enqueue(f);
