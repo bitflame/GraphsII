@@ -1,6 +1,7 @@
 import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.Digraph;
 import edu.princeton.cs.algs4.In;
+import edu.princeton.cs.algs4.Stack;
 
 import java.util.Iterator;
 
@@ -127,28 +128,40 @@ public class SAP {
     private void updateAncestor(int v, int w) {
         // 1- Find the new ancestor
         System.out.printf("inside updateAncestor()\n");
+        Stack<Integer> path = new Stack<>();
         int fromCount = 0, toCount = 0;
         int i = v, j = w;
-        // Go from each side to the other and count the number of steps, then take the lower value. If you can not get to other side, run lockstepBFS
-        // v to w
+        // todo - This needs a nested loop to compare i with j and if they are equal, then that is the ancestor
         while (i != -1 && i != w) {
-            i = edgeTo[i];
             fromCount++;
-            if (i == -1) break;
+            path.push(i);
+            i = edgeTo[i];
         }
-        if (i != -1) {
+        if (i == w) {
             ancestor = v;
             minDistance = fromCount;
         }
         // w to v
         while (j != -1 && j != v) {
-            j = edgeTo[j];
+            path.push(j);
             toCount++;
-            if (j == -1) break;
+            j = edgeTo[j];
         }
-        if (j != -1 && toCount < minDistance) {
+        if (j == v) {
             minDistance = toCount;
             ancestor = w;
+        } else {
+            // pop until you get to w, and start counting
+            int n = path.peek();
+            while (n != v || n != w) path.pop();
+            n = path.peek();
+            int counter = 0;
+            // pop until you get to v, and stop counting
+            while (n != v || n != w) {
+                counter++;
+                path.pop();
+            }
+            minDistance = counter;
         }
         if (i != w || j != v) {
             // run bfs
