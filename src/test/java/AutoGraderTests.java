@@ -42,12 +42,6 @@ public class AutoGraderTests {
             System.out.printf("shortest distance between 2657, and 55738 should be 15, but it is: %d\n ", shortestDistance);
     }
 
-    private void testSubgraphs() {
-        StdOut.println("--------------------------- Running AutoGrader Tests for SubGraphs ------------------------------");
-        WordNet wordNet = new WordNet("synsets100-subgraph.txt", "hypernyms100-subgraph.txt");
-
-    }
-
     private void testDigraph1() {
         StdOut.println("----------------------------------Running AutoGrader Tests for Digraph 1 ----------------------------------");
         in = new In("digraph1.txt");
@@ -98,8 +92,11 @@ public class AutoGraderTests {
         } catch (IllegalArgumentException illegalArgumentException) {
             System.out.printf("Error message for non-exitant value: %s\n", illegalArgumentException.getMessage());
         }
-        ancestor = sap.ancestor(13, 0);
-
+        try {
+            ancestor = sap.ancestor(13, 0);
+        } catch (IllegalArgumentException illegalArgumentException) {
+            System.out.printf("Error message for non-exitant value: %s\n", illegalArgumentException.getMessage());
+        }
     }
 
     private void testDigraph2() {
@@ -368,21 +365,6 @@ public class AutoGraderTests {
         }
     }
 
-    private void testIterablesWithDigraph1() {
-        // G = digraph1.txt, v = { 0, null, 7, 9, 12 }, w = { 1, 2, 4, 5, 10 }
-        StdOut.println("------------------ Running AutoGrader Tests for testIterables with Digraph1 -------------------");
-        in = new In("digraph1.txt");
-        digraph = new Digraph(in);
-        sap = new SAP(digraph);
-        v = new ArrayList<>(List.of(0, null, 7, 9, 12));
-        w = new ArrayList<>(List.of(1, 2, 4, 5, 10));
-        try {
-            shortestDistance = sap.length(v, w);
-        } catch (Exception ie) {
-            System.out.printf("Exception result: %s", ie.getMessage());
-        }
-    }
-
     public static void main(String[] args) {
         AutoGraderTests autoGraderTests = new AutoGraderTests();
         autoGraderTests.testDigraphWordNet();
@@ -395,6 +377,5 @@ public class AutoGraderTests {
         autoGraderTests.testDigraph9();
         autoGraderTests.createTwoObjects();
         autoGraderTests.testIterables();
-        autoGraderTests.testIterablesWithDigraph1();
     }
 }
