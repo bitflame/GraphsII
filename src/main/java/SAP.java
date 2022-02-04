@@ -32,13 +32,11 @@ public class SAP {
         }
         fromDistTo = new int[n];
         toDistTo = new int[n];
-
     }
 
     // length of the shortest ancestral path between v and w; -1 if no such path
     public int length(int v, int w) {
         // System.out.println("length(): Calculating the distance between : " + v + " " + w);
-
         if (v < 0 || v >= digraphDFCopy.V()) throw new IllegalArgumentException("The node ids should be within acceptable range.\n");
         if (w < 0 || w >= digraphDFCopy.V()) throw new IllegalArgumentException("The node ids should be within acceptable range.\n");
         if (v == from && w == to && v != w) return minDistance;
@@ -113,17 +111,6 @@ public class SAP {
             minDistance = -1;
             return ancestor = -1;
         }
-        n = digraphDFCopy.V();
-        fromMarked = new boolean[n];
-        toMarked = new boolean[n];
-        // fromEdgeTo = new int[n];
-        // toEdgeTo = new int[n];
-        edgeTo = new int[n];
-        for (int i = 0; i < n; i++) {
-            edgeTo[i] = -1;
-        }
-        fromDistTo = new int[n];
-        toDistTo = new int[n];
         lockStepBFS(from, to);
         return ancestor;
     }
