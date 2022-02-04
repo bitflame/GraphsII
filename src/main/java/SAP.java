@@ -125,14 +125,38 @@ public class SAP {
 
     // method to find the ancestor if both source and destination are marked
     private void updateAncestor(int v, int w) {
-// 1- Find the new ancestor
-        System.out.printf("Just a placeholder ");
-        int counter = 0;
-        for (int i = v, j = w; i != w && j != v; i = edgeTo[i], j = edgeTo[j]) {
-            counter++;
-            if (i == -1 || j == -1) break; // may have to separate these into two loops
+        // 1- Find the new ancestor
+        System.out.printf("inside updateAncestor()\n");
+        int fromCount = 0, toCount = 0;
+        int i = v, j = w;
+        // Go from each side to the other and count the number of steps, then take the lower value. If you can not get to other side, run lockstepBFS
+        // v to w
+        while (i != -1 && i != w) {
+            i = edgeTo[i];
+            fromCount++;
+            if (i == -1) break;
         }
-        minDistance = counter;
+        if (i != -1) {
+            ancestor = v;
+            minDistance = fromCount;
+        }
+        // w to v
+        while (j != -1 && j != v) {
+            j = edgeTo[j];
+            toCount++;
+            if (j == -1) break;
+        }
+        if (j != -1 && toCount < minDistance) {
+            minDistance = toCount;
+            ancestor = w;
+        }
+        if (i != w || j != v) {
+            // run bfs
+        }
+        if (i == -1 && j == -1) {
+            minDistance = -1;
+            ancestor = -1;
+        }
     }
 
     // a common ancestor that participates in the shortest ancestral path; -1 if no such path
