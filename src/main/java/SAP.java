@@ -128,10 +128,19 @@ public class SAP {
     private void updateAncestor(int v, int w) {
         // 1- Find the new ancestor
         System.out.printf("inside updateAncestor()\n");
-        Stack<Integer> path = new Stack<>();
+        // todo - This needs a nested loop to compare i with j and if they are equal, then that is the ancestor
+        for (int i = 0; i < digraphDFCopy.V(); i++) {
+            for (int j = 0; j < digraphDFCopy.V(); j++) {
+                if (edgeTo[i] == edgeTo[j]) {
+                    ancestor = edgeTo[i];
+                    minDistance = fromDistTo[ancestor] + toDistTo[ancestor];
+                }
+            }
+        }
+        /* Stack<Integer> path = new Stack<>();
         int fromCount = 0, toCount = 0;
         int i = v, j = w;
-        // todo - This needs a nested loop to compare i with j and if they are equal, then that is the ancestor
+
         while (i != -1 && i != w) {
             fromCount++;
             path.push(i);
@@ -169,7 +178,7 @@ public class SAP {
         if (i == -1 && j == -1) {
             minDistance = -1;
             ancestor = -1;
-        }
+        } */
     }
 
     // a common ancestor that participates in the shortest ancestral path; -1 if no such path
