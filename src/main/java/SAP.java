@@ -140,7 +140,8 @@ public class SAP {
         }
         if (i == w) {
             ancestor = v;
-            currentMinDist = fromCount;
+            currentMinDist = fromCount + 1;
+            minDistance = currentMinDist;
         }
         path.push(w);
         toCount++;
