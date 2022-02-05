@@ -128,34 +128,26 @@ public class SAP {
     private void updateAncestor(int v, int w) {
         // 1- Find the new ancestor
         System.out.printf("inside updateAncestor()\n");
-        // todo - This needs a nested loop to compare i with j and if they are equal, then that is the ancestor
-        for (int i = 0; i < digraphDFCopy.V(); i++) {
-            for (int j = 0; j < digraphDFCopy.V(); j++) {
-                if (edgeTo[i] == edgeTo[j]) {
-                    ancestor = edgeTo[i];
-                    minDistance = fromDistTo[ancestor] + toDistTo[ancestor];
-                }
-            }
-        }
-        /* Stack<Integer> path = new Stack<>();
+        Stack<Integer> path = new Stack<>();
         int fromCount = 0, toCount = 0;
         int i = v, j = w;
-
         while (i != -1 && i != w) {
             fromCount++;
             path.push(i);
             i = edgeTo[i];
         }
+        path.push(i);
         if (i == w) {
             ancestor = v;
             minDistance = fromCount;
         }
-        // w to v
+        // w to v - one of these loops has the path
         while (j != -1 && j != v) {
             path.push(j);
             toCount++;
             j = edgeTo[j];
         }
+        path.push(j);
         if (j == v) {
             minDistance = toCount;
             ancestor = w;
@@ -165,20 +157,18 @@ public class SAP {
             while (n != v || n != w) path.pop();
             n = path.peek();
             int counter = 0;
-            // pop until you get to v, and stop counting
+            // pop until you get to v, and stop counting -- ancestor should be on top of the stack
             while (n != v || n != w) {
                 counter++;
                 path.pop();
             }
             minDistance = counter;
         }
-        if (i != w || j != v) {
-            // run bfs
-        }
         if (i == -1 && j == -1) {
+            // it means the nodes are not connected
             minDistance = -1;
             ancestor = -1;
-        } */
+        }
     }
 
     // a common ancestor that participates in the shortest ancestral path; -1 if no such path
