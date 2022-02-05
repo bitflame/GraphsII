@@ -126,6 +126,7 @@ public class SAP {
 
     // method to find the ancestor if both source and destination are marked
     private void updateAncestor(int v, int w) {
+        int currentMinDist = INFINITY;
         // 1- Find the new ancestor
         System.out.printf("inside updateAncestor()\n");
         Stack<Integer> path = new Stack<>();
@@ -139,35 +140,44 @@ public class SAP {
         }
         if (i == w) {
             ancestor = v;
-            minDistance = fromCount;
-            return;
+            currentMinDist = fromCount;
         }
         path.push(w);
+        toCount++;
         // w to v - one of these loops has the path
         while (j != -1 && j != v && j != w) {
             path.push(j);
             toCount++;
             j = edgeTo[j];
         }
-        if (j == v) {
-            minDistance = toCount;
+        if (j == v && toCount < currentMinDist) {
+            currentMinDist = toCount;
+            minDistance = currentMinDist;
             ancestor = w;
-            return;
         } else if (i != -1 && j != -1) {
             // pop until you get to w, and start counting
             int n = path.pop();
+            int previousNode = n;
             while (n != v && n != w) {
                 n = path.pop();
+                if (previousNode == n) ancestor = n;
+                previousNode = n;
             }
             n = path.pop();
+            previousNode = n;
             int counter = 1;
             // pop until you get to v, and stop counting -- ancestor should be on top of the stack
             while (n != v && n != w) {
                 counter++;
                 n = path.pop();
+                if (previousNode == n) ancestor = n;
+                previousNode = n;
             }
-            minDistance = counter;
-        } else if (i == -1 || j == -1) lockStepBFS(v, w);// you may still need to run lock-step
+            if (counter < currentMinDist) {
+                currentMinDist = counter;
+                minDistance = currentMinDist;
+            }
+        } else if (currentMinDist == INFINITY) lockStepBFS(v, w);// you may still need to run lock-step
     }
 
     // a common ancestor that participates in the shortest ancestral path; -1 if no such path
