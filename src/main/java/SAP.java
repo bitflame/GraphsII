@@ -136,7 +136,6 @@ public class SAP {
             path.push(i);
             i = edgeTo[i];
         }
-        path.push(i);
         if (i == w) {
             ancestor = v;
             minDistance = fromCount;
@@ -147,15 +146,18 @@ public class SAP {
             toCount++;
             j = edgeTo[j];
         }
-        path.push(j);
         if (j == v) {
             minDistance = toCount;
             ancestor = w;
+        } else if (i == -1 && j == -1) {
+            // it means the nodes are not connected
+            minDistance = -1;
+            ancestor = -1;
         } else {
             // pop until you get to w, and start counting
-            int n = path.peek();
+            int n = path.pop();
             while (n != v || n != w) path.pop();
-            n = path.peek();
+            n = path.pop();
             int counter = 0;
             // pop until you get to v, and stop counting -- ancestor should be on top of the stack
             while (n != v || n != w) {
@@ -163,11 +165,6 @@ public class SAP {
                 path.pop();
             }
             minDistance = counter;
-        }
-        if (i == -1 && j == -1) {
-            // it means the nodes are not connected
-            minDistance = -1;
-            ancestor = -1;
         }
     }
 
