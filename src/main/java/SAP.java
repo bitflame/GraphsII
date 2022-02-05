@@ -130,8 +130,9 @@ public class SAP {
         System.out.printf("inside updateAncestor()\n");
         Stack<Integer> path = new Stack<>();
         int fromCount = 0, toCount = 0;
-        int i = v, j = w;
-        while (i != -1 && i != w) {
+        path.push(v);
+        int i = edgeTo[v], j = edgeTo[w];
+        while (i != -1 && i != w && i != v) {
             fromCount++;
             path.push(i);
             i = edgeTo[i];
@@ -139,9 +140,11 @@ public class SAP {
         if (i == w) {
             ancestor = v;
             minDistance = fromCount;
+            return;
         }
+        path.push(w);
         // w to v - one of these loops has the path
-        while (j != -1 && j != v) {
+        while (j != -1 && j != v && j != w) {
             path.push(j);
             toCount++;
             j = edgeTo[j];
@@ -149,23 +152,22 @@ public class SAP {
         if (j == v) {
             minDistance = toCount;
             ancestor = w;
-        } else if (i == -1 && j == -1) {
-            // it means the nodes are not connected
-            minDistance = -1;
-            ancestor = -1;
-        } else {
+            return;
+        } else if (i != -1 && j != -1) {
             // pop until you get to w, and start counting
             int n = path.pop();
-            while (n != v || n != w) path.pop();
+            while (n != v && n != w) {
+                n = path.pop();
+            }
             n = path.pop();
-            int counter = 0;
+            int counter = 1;
             // pop until you get to v, and stop counting -- ancestor should be on top of the stack
-            while (n != v || n != w) {
+            while (n != v && n != w) {
                 counter++;
-                path.pop();
+                n = path.pop();
             }
             minDistance = counter;
-        }
+        } else if (i == -1 || j == -1) lockStepBFS(v, w);// you may still need to run lock-step
     }
 
     // a common ancestor that participates in the shortest ancestral path; -1 if no such path
