@@ -240,7 +240,6 @@ public class SAP {
         toDistTo[t] = 0;
         int currentDistance = INFINITY;
         // System.out.printf("lockStepBFS(): Here is f: %d t: %d \n", f, t);
-
         while (!(fromQueue.isEmpty() && toQueue.isEmpty())) {
             if (!fromQueue.isEmpty()) {
                 int v = fromQueue.dequeue();
@@ -251,7 +250,7 @@ public class SAP {
                         fromDistTo[j] = Math.min(fromDistTo[j], (fromDistTo[v] + 1));
                         int toDist = 0;
                         if (toDistTo[j] > 0) toDist = toDistTo[j];
-                        edgeTo[j] = v;
+
                         int fromDist = 0;
                         if (fromDistTo[j] > 0) fromDist = fromDistTo[j];
                         if (print)
@@ -263,6 +262,7 @@ public class SAP {
                             if (print)
                                 System.out.printf("lockStepBfs(): updated the ancestor to %d and Current Distance to: " +
                                         "%d in the looped J block for f: %d, and t: %d\n", ancestor, currentDistance, f, t);
+                            edgeTo[j] = v;
                         }
                     }
                     if (!fromMarked[j]) {
@@ -281,7 +281,7 @@ public class SAP {
                                             " %d in the normal J block for f: %d, and t: %d\n", ancestor, currentDistance, f, t);
                             }
                         }
-                        edgeTo[j] = v; // since it was not maked, add it to the queue to check its neighbors
+                        edgeTo[j] = v; // since it was not marked, add it to the queue to check its neighbors
                         fromQueue.enqueue(j);
                     }
                 }
@@ -293,7 +293,7 @@ public class SAP {
                     if (fromMarked[k] && toMarked[k]) {
                         int fromDist = 0;
                         if (fromDistTo[k] > 0) fromDist = fromDistTo[k];
-                        edgeTo[k] = w;
+
                         int toDist = 0;
                         if (toDistTo[k] > 0) toDist = Math.min(toDistTo[k], (toDistTo[w] + 1));
                         if (print)
@@ -305,7 +305,7 @@ public class SAP {
                             if (print)
                                 System.out.printf("lockStepBfs(): updated the ancestor from the looped to %d and Minimum " +
                                         "Distance to: %d in K block for f: %d f: %d\n", ancestor, minDistance, f, t);
-
+                            edgeTo[k] = w;
                         }
                     }
                     if (!toMarked[k]) {
