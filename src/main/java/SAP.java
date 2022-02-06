@@ -123,7 +123,7 @@ public class SAP {
         } else lockStepBFS(from, to);
         return ancestor;
     }
-
+// test digraph5 (10, 13), (10,19), and (10, 18) also
     // method to find the ancestor if both source and destination are marked
     private void updateAncestor(int v, int w) {
         int currentMinDist = INFINITY;
@@ -178,7 +178,7 @@ public class SAP {
                 currentMinDist = counter;
                 minDistance = currentMinDist;
             }
-        } else if (currentMinDist == INFINITY) lockStepBFS(v, w);// you may still need to run lock-step
+        } else if (currentMinDist == INFINITY) lockStepBFS(v, w);
     }
 
     // a common ancestor that participates in the shortest ancestral path; -1 if no such path
